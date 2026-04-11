@@ -1,0 +1,32 @@
+{% extends 'grades/base.html' %}
+
+{% block title %}Crear Periodo | Sistema Académico{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{% url 'periodo_list' %}" style="text-decoration: none; color: var(--text-muted); font-size: 0.875rem; font-weight: 600;">← Volver a la lista</a>
+</div>
+
+<div class="form-container">
+    <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;">Nuevo Periodo Lectivo</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        {% for field in form %}
+        <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+            <div style="color: #b91c1c; font-size: 0.75rem; margin-top: 0.25rem;">{{ field.errors.0 }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Periodo</button>
+            <a href="{% url 'periodo_list' %}" class="btn btn-outline" style="flex: 1; justify-content: center;">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

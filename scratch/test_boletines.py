@@ -1,0 +1,31 @@
+import os
+import django
+import sys
+
+# Setup django
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'academic_sys.settings')
+django.setup()
+
+from grades.utils.excel_reports import generar_excel_boletines_individuales
+from grades.models import Curso
+
+def test():
+    curso = Curso.objects.first()
+    if not curso:
+        print("No courses found.")
+        return
+
+    print(f"Testing Individual Bulletins for course: {curso}")
+    
+    try:
+        wb = generar_excel_boletines_individuales(curso.id)
+        wb.save("test_boletines_individuales.xlsx")
+        print("Bulletins saved to test_boletines_individuales.xlsx")
+    except Exception as e:
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+
+if __name__ == "__main__":
+    test()

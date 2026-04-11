@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django stuff:
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Excel temporary and locks
+~$*
+*.tmp
+
+# Generated Excel reports (optional, typical for ignoring exports)
+*.xlsx
+*.xls
+
+# Virtual environment
+venv/
+env/
+.env
+
+# Media compiled
+/media/
+
+# DS_Store
+.DS_Store

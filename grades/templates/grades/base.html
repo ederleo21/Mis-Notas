@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema Académico{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-body: #f1f5f9;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .header {
+            background-color: var(--bg-card);
+            border-bottom: 2px solid var(--primary);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 800;
+        }
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.025em;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: 1px solid transparent;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-outline {
+            border-color: var(--border);
+            background-color: white;
+            color: var(--text-main);
+        }
+
+        .btn-outline:hover {
+            background-color: #f1f5f9;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            margin-top: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f8fafc;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.875rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .badge {
+            display: inline-flex;
+            padding: 0.25rem 0.625rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background-color: #dcfce7;
+            color: #15803d;
+        }
+
+        .badge-danger {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+
+        /* Dashboard styles */
+        .welcome {
+            margin-bottom: 3rem;
+        }
+
+        .welcome h2 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        .welcome p {
+            color: var(--text-muted);
+            font-size: 1.125rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+        .card-icon {
+            width: 3.5rem;
+            height: 3.5rem;
+            background-color: #eef2ff;
+            border-radius: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .card-content h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .card-content p {
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .card-footer {
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .card-footer span {
+            margin-left: 0.5rem;
+            transition: transform 0.2s;
+        }
+
+        .card:hover .card-footer span {
+            transform: translateX(4px);
+        }
+
+        .main-nav {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+        }
+
+        .nav-link.active {
+            color: var(--primary);
+            position: relative;
+        }
+
+        .nav-link.active::after {
+            content: "";
+            position: absolute;
+            bottom: -1rem;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            transform: translateY(20px) scale(0.95);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-header {
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .modal-header h3 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -0.025em;
+        }
+
+        .close-modal {
+            background: #f1f5f9;
+            border: none;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            cursor: pointer;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+
+        .close-modal:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+            transform: rotate(90deg);
+        }
+
+        /* Ocultar elementos redundantes en el modal */
+        #modal-body h1, #modal-body h2, #modal-body .back-link, #modal-body a[href*="list"] {
+            display: none !important;
+        }
+
+        #modal-body .form-container {
+            padding: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+            background: transparent !important;
+        }
+
+        @media (max-width: 640px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <header class="header">
+        <a href="{% url 'dashboard' %}" class="logo">
+            <div class="logo-icon">N</div>
+            <div class="logo-text">Mis Notas</div>
+        </a>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline" style="border-radius: 0.5rem; font-weight: 700;">Panel Principal</a>
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding-left: 1rem; border-left: 2px solid #f1f5f9;">
+                <div style="text-align: right;">
+                    <div style="font-size: 0.875rem; font-weight: 700; color: #1e293b;">{{ user.get_full_name|default:user.username }}</div>
+                    <div style="font-size: 0.75rem; color: var(--primary); font-weight: 600;">{{ user.username }}</div>
+                </div>
+                <form method="post" action="{% url 'logout' %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" title="Cerrar sesión" style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 0.5rem; background: #fef2f2; color: #ef4444; border: none; cursor: pointer; transition: all 0.2s; font-size: 1.1rem;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">⏻</button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        {% if request.resolver_match.url_name != 'dashboard' and 'notas' not in request.path %}
+        <nav class="main-nav">
+            <a href="{% url 'periodo_list' %}" class="nav-link {% if 'periodo' in request.path %}active{% endif %}">Años Lectivos</a>
+            <a href="{% url 'nivel_list' %}" class="nav-link {% if 'nivel' in request.path %}active{% endif %}">Grados</a>
+            <a href="{% url 'curso_list' %}" class="nav-link {% if 'curso' in request.path %}active{% endif %}">Cursos</a>
+            <a href="{% url 'estudiante_list' %}" class="nav-link {% if 'estudiante' in request.path %}active{% endif %}">Estudiantes</a>
+            <a href="{% url 'matricula_list' %}" class="nav-link {% if 'matricula' in request.path %}active{% endif %}">Matriculación</a>
+            <a href="{% url 'subject_list' %}" class="nav-link {% if 'materia' in request.path %}active{% endif %}">Materias</a>
+            <a href="{% url 'actividad_list' %}" class="nav-link {% if 'actividad' in request.path %}active{% endif %}">Insumos</a>
+        </nav>
+
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Generic Modal -->
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Título</h3>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modal-body">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openModal() {
+            const overlay = document.getElementById('modal-overlay');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            const overlay = document.getElementById('modal-overlay');
+            overlay.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            setTimeout(() => {
+                if (!overlay.classList.contains('active')) {
+                    document.getElementById('modal-body').innerHTML = '';
+                }
+            }, 400); // Wait for animation
+        }
+
+        // Close on click outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal-overlay');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        async function openEditModal(url, title, maxWidth = '500px') {
+            const modalContent = document.querySelector('.modal-content');
+            modalContent.style.maxWidth = maxWidth;
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-body').innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem;">
+                    <div style="width: 2rem; height: 2rem; border: 3px solid #f1f5f9; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    <p style="margin-top: 1rem; color: #94a3b8; font-size: 0.875rem;">Cargando formulario...</p>
+                </div>
+                <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+            `;
+            openModal();
+
+            try {
+                const response = await fetch(url);
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Get only the form
+                const form = doc.querySelector('.form-container form') || doc.querySelector('form');
+                
+                if (form) {
+                    document.getElementById('modal-body').innerHTML = '';
+                    document.getElementById('modal-body').appendChild(form);
+                    
+                    // Force buttons to fit
+                    const cancelBtn = form.querySelector('a.btn-outline');
+                    if (cancelBtn) {
+                        cancelBtn.onclick = (e) => { e.preventDefault(); closeModal(); };
+                    }
+
+                    form.onsubmit = async (e) => {
+                        e.preventDefault();
+                        const formData = new FormData(form);
+                        const submitBtn = form.querySelector('[type="submit"]');
+                        if (submitBtn) {
+                            submitBtn.disabled = true;
+                            submitBtn.textContent = 'Guardando...';
+                        }
+                        
+                        try {
+                            const res = await fetch(url, {
+                                method: 'POST',
+                                body: formData,
+                                headers: { 
+                                    'X-CSRFToken': '{{ csrf_token }}',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            });
+                            if (res.ok) {
+                                window.location.reload();
+                            } else {
+                                alert("Error al guardar. Revisa los campos.");
+                                if (submitBtn) {
+                                    submitBtn.disabled = false;
+                                    submitBtn.textContent = 'Guardar Cambios';
+                                }
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            if (submitBtn) {
+                                submitBtn.disabled = false;
+                                submitBtn.textContent = 'Guardar Cambios';
+                            }
+                        }
+                    };
+                }
+            } catch (err) {
+                document.getElementById('modal-body').innerHTML = 'Error al cargar el formulario.';
+            }
+        }
+
+        function openDeleteModal(url, itemName) {
+            document.getElementById('modal-title').textContent = 'Confirmar Eliminación';
+            document.getElementById('modal-body').innerHTML = `
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <div style="font-size: 3.5rem; margin-bottom: 1.5rem; animation: pulse 2s infinite;">⚠️</div>
+                    <p style="color: #64748b; font-size: 1.125rem; line-height: 1.6;">¿Estás seguro de que deseas eliminar <br><strong style="color: #0f172a;">${itemName}</strong>?</p>
+                    <p style="font-size: 0.875rem; color: #ef4444; margin-top: 1rem; background: #fff1f2; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #fee2e2;">Esta acción es irreversible y borrará permanentemente todos los datos asociados.</p>
+                </div>
+                <form id="delete-form" style="display: flex; gap: 1rem;">
+                    <button type="button" onclick="closeModal()" class="btn btn-outline" style="flex: 1; border-radius: 0.75rem; font-weight: 600;">No, mantener</button>
+                    <button type="submit" class="btn btn-danger" style="flex: 1; background-color: #ef4444; border-radius: 0.75rem; font-weight: 600;">Sí, eliminar</button>
+                </form>
+                <style>@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }</style>
+            `;
+            openModal();
+
+            document.getElementById('delete-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const btn = e.target.querySelector('.btn-danger');
+                btn.disabled = true;
+                btn.textContent = 'Eliminando...';
+                
+                try {
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    if (res.ok) {
+                        window.location.reload();
+                    } else {
+                        alert("Error al eliminar.");
+                        btn.disabled = false;
+                        btn.textContent = 'Sí, eliminar';
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+            };
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

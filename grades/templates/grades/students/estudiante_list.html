@@ -1,0 +1,39 @@
+{% extends 'grades/base.html' %}
+
+{% block title %}Estudiantes | Sistema Académico{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+        <h2 style="font-size: 1.875rem; font-weight: 700;">Estudiantes</h2>
+        <p style="color: var(--text-muted);">Listado general de estudiantes registrados.</p>
+    </div>
+    <a href="{% url 'estudiante_create' %}" class="btn btn-primary">+ Nuevo Estudiante</a>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Apellidos y Nombres</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for estudiante in estudiantes %}
+            <tr>
+                <td style="font-weight: 600;">{{ estudiante.apellidos }} {{ estudiante.nombres }}</td>
+                <td style="display: flex; gap: 1rem;">
+                    <button onclick="openEditModal('{% url 'estudiante_update' estudiante.pk %}', 'Editar Estudiante')" style="background: none; border: none; color: var(--primary); font-weight: 600; font-size: 0.875rem; cursor: pointer; padding: 0;">Editar</button>
+                    <button onclick="openDeleteModal('{% url 'estudiante_delete' estudiante.pk %}', '{{ estudiante.apellidos }} {{ estudiante.nombres }}')" style="background: none; border: none; color: #ef4444; font-weight: 600; font-size: 0.875rem; cursor: pointer; padding: 0;">Eliminar</button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 3rem;">No hay estudiantes registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

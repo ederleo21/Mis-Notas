@@ -1,0 +1,49 @@
+{% extends 'grades/base.html' %}
+
+{% block title %}Cursos | Sistema Académico{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+        <h2 style="font-size: 1.875rem; font-weight: 700;">Gestión de Cursos</h2>
+        <p style="color: var(--text-muted);">Relaciona niveles con periodos y docentes.</p>
+    </div>
+    <a href="{% url 'curso_create' %}" class="btn btn-primary">+ Nuevo Curso</a>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Nivel</th>
+                <th>Periodo</th>
+                <th>Docente</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for curso in cursos %}
+            <tr>
+                <td style="font-weight: 600;">{{ curso.nivel }}</td>
+                <td>{{ curso.periodo }}</td>
+                <td>
+                    {% if curso.docente.get_full_name %}
+                        {{ curso.docente.get_full_name }}
+                    {% else %}
+                        {{ curso.docente.username }}
+                    {% endif %}
+                </td>
+                <td style="display: flex; gap: 1rem;">
+                    <button onclick="openEditModal('{% url 'curso_update' curso.pk %}', 'Editar Curso', '800px')" style="background: none; border: none; color: var(--primary); font-weight: 600; font-size: 0.875rem; cursor: pointer; padding: 0;">Editar</button>
+                    <button onclick="openDeleteModal('{% url 'curso_delete' curso.pk %}', '{{ curso.nivel }} {{ curso.periodo }}')" style="background: none; border: none; color: #ef4444; font-weight: 600; font-size: 0.875rem; cursor: pointer; padding: 0;">Eliminar</button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 3rem;">No hay cursos registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

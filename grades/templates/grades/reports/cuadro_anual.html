@@ -1,0 +1,351 @@
+{% extends 'grades/base.html' %}
+
+{% block title %}Cuadro Final | {{ curso_sel }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ---- CONFIGURACION DE CONTENEDOR (ANCHO TOTAL) ---- */
+    .container {
+        max-width: none !important;
+        width: 100% !important;
+        padding: 0 1rem !important;
+        margin: 1.5rem 0 !important;
+    }
+
+    /* ---- TOOLBAR MODERNA ---- */
+    .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        background: #ffffff;
+        padding: 0.75rem 1.25rem;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .toolbar-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #0f172a;
+    }
+    .toolbar-title span { color: var(--primary); font-weight: 700; }
+
+    /* FILTROS EQUILIBRADOS */
+    .toolbar .form-input {
+        height: 38px !important;
+        padding: 0 0.75rem !important;
+        font-size: 0.9rem !important;
+        border-radius: 8px !important;
+        font-weight: 400 !important;
+    }
+
+    .btn-sm-outline {
+        padding: 0.6rem 1.5rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        background: white;
+        border: 2px solid var(--primary);
+        color: var(--primary);
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    /* ---- TABLA DE REPORTE ---- */
+    .report-table-wrap {
+        background: white;
+        border-radius: 1rem;
+        border: 1px solid var(--border);
+        overflow: auto;
+    }
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: center;
+    }
+    
+    .report-table th {
+        background: #f8fafc;
+        padding: 1rem 0.6rem;
+        font-weight: 700;
+        border: 1px solid #e2e8f0;
+        color: #1e293b;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }
+
+    .materia-head {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+        font-size: 0.9rem !important;
+        font-weight: 700 !important;
+    }
+
+    .main-head {
+        background: #eef2ff !important;
+        color: #4338ca !important;
+        font-weight: 700 !important;
+        font-size: 1rem !important;
+    }
+
+    /* STICKY COLUMN ESTUDIANTE */
+    .col-sticky {
+        position: sticky;
+        left: 0;
+        z-index: 20;
+        background: white;
+        border-right: 2px solid var(--border) !important;
+        min-width: 250px;
+        text-align: left !important;
+        padding-left: 1.5rem !important;
+        font-weight: 500;
+        font-size: 1rem;
+        color: #0f172a;
+    }
+    .report-table tr:hover td { background: #fbfcfe; }
+    .report-table tr:hover .col-sticky { background: #f8fafc; }
+
+    .report-table td {
+        padding: 0.75rem 0.6rem;
+        border: 1px solid #f1f5f9;
+        font-size: 0.95rem;
+        color: #334155;
+    }
+
+    /* INPUTS EQUILIBRADOS */
+    .input-grade {
+        width: 65px;
+        height: 38px;
+        text-align: center;
+        border: 2px solid #cbd5e1;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+    }
+    .input-grade:focus { border-color: var(--primary); outline: none; }
+    .input-grade.saved { background: #dcfce7; border-color: #22c55e; color: #15803d; }
+
+    /* ESTILOS DE COLUMNAS */
+    .col-prom-t { font-weight: 600; color: #be185d; background: #fff1f2 !important; }
+    .col-examen { background: #fffbeb !important; }
+    .col-final-mat { font-weight: 600; color: #1e40af; background: #eff6ff !important; border-right: 2px solid #bfdbfe !important; }
+
+    .final-overall {
+        background: #0f172a !important;
+        color: white !important;
+        font-weight: 700 !important;
+        font-size: 1.1rem !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <div class="toolbar">
+        <div class="toolbar-side" style="flex: 1;">
+            <div class="toolbar-title">
+                {% if materia_sel %}
+                📝 REGISTRO: <span>{{ materia_sel.nombre|upper }}</span>
+                {% else %}
+                📊 CUADRO: <span>CONSOLIDADO</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="toolbar-center" style="flex: 2; display: flex; justify-content: center; gap: 1.5rem; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Curso:</span>
+                <select class="form-input" style="width: 250px; font-weight: 600;" onchange="location.href='?materia={{ materia_sel_id }}&curso='+this.value">
+                    <option value="">-- Seleccionar --</option>
+                    {% for c in cursos %}
+                    <option value="{{ c.pk }}" {% if curso_sel_id == c.pk|stringformat:"i" %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Materia:</span>
+                <select class="form-input" style="width: 250px; font-weight: 600;" onchange="location.href='?curso={{ curso_sel_id }}&materia='+this.value">
+                    <option value="">-- CUADRO GENERAL --</option>
+                    {% for s in subjects_list %}
+                    <option value="{{ s.pk }}" {% if materia_sel_id == s.pk|stringformat:"i" %}selected{% endif %}>{{ s.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="toolbar-side" style="flex: 1; display: flex; justify-content: flex-end; gap: 0.75rem;">
+            {% if curso_sel_id %}
+            <a href="{% url 'exportar_boletines_excel' %}?curso={{ curso_sel_id }}" class="btn-sm" style="background: #64748b; color: white; padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; border-radius: 0.75rem; transition: all 0.3s; border: none; text-decoration: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                Generar Boletines
+            </a>
+            <a href="{% url 'exportar_anual_excel' %}?curso={{ curso_sel_id }}" class="btn-sm" style="background: #10b981; color: white; padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; border-radius: 0.75rem; transition: all 0.3s; border: none; text-decoration: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                Exportar Excel
+            </a>
+            {% endif %}
+            <a href="{% url 'notas_registro' %}?curso={{ curso_sel.pk }}{% if materia_sel %}&materia={{ materia_sel.pk }}{% endif %}" class="btn-sm-outline">
+                ← REGISTRO DIARIO
+            </a>
+        </div>
+    </div>
+
+    {% if show_table %}
+    <div class="report-table-wrap">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th rowspan="2" class="col-sticky">LISTADO DE ESTUDIANTES</th>
+                    
+                    {% if materia_sel %}
+                        <th colspan="3" class="materia-head">PROMEDIOS TRIMESTRALES</th>
+                        <th colspan="3" class="main-head">CALIFICACIÓN FINAL DE MATERIA</th>
+                    {% else %}
+                        {% for mat in subjects_list %}
+                        <th class="materia-head" style="width: 120px; font-size: 0.85rem !important; padding: 0.75rem !important;">{{ mat.nombre|truncatechars:15|upper }}</th>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <th rowspan="2" style="width: 60px;">COMP.</th>
+                    <th rowspan="2" style="width: 80px;">TOTAL</th>
+                    <th rowspan="2" class="final-overall" style="width: 90px;">PROM. F.</th>
+                </tr>
+                <tr>
+                    {% if materia_sel %}
+                        <th style="width: 140px;">1ER TRIMESTRE</th>
+                        <th style="width: 140px;">2DO TRIMESTRE</th>
+                        <th style="width: 140px;">3ER TRIMESTRE</th>
+                        <th style="width: 160px;" class="col-prom-t">PROM. TRIM.</th>
+                        <th style="width: 160px;" class="col-examen">EXAMEN FINAL</th>
+                        <th style="width: 160px;" class="col-final-mat">NOTA FINAL</th>
+                    {% else %}
+                        {% for mat in subjects_list %}
+                        <th style="font-size: 0.7rem; color: #64748b;">PROMEDIO FINAL</th>
+                        {% endfor %}
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in tabla %}
+                <tr data-matricula="{{ fila.matricula.pk }}">
+                    <td class="col-sticky">{{ fila.matricula.estudiante|upper }}</td>
+                    
+                    {% if materia_sel %}
+                        {% with m_data=fila.materias.0 %}
+                        <td>{{ m_data.t1|floatformat:2 }}</td>
+                        <td>{{ m_data.t2|floatformat:2 }}</td>
+                        <td>{{ m_data.t3|floatformat:2 }}</td>
+                        <td class="col-prom-t" id="prom-t-{{ fila.matricula.pk }}-{{ m_data.subject.pk }}">{{ m_data.prom_t|floatformat:2 }}</td>
+                        <td class="col-examen">
+                            <input type="number" 
+                                class="input-grade" 
+                                value="{{ m_data.examen|default:'' }}"
+                                step="0.01" min="0" max="10"
+                                onchange="guardarExamenMateria(this, {{ fila.matricula.pk }}, {{ m_data.subject.pk }})">
+                        </td>
+                        <td class="col-final-mat" id="final-mat-{{ fila.matricula.pk }}-{{ m_data.subject.pk }}">
+                            {{ m_data.prom_final|floatformat:2 }}
+                        </td>
+                        {% endwith %}
+                    {% else %}
+                        {% for m_data in fila.materias %}
+                        <td style="font-weight: 700; color: #1e40af; background: #f8fafc; font-size: 1.1rem;">{{ m_data.prom_final|floatformat:2 }}</td>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <td>
+                        <select class="input-grade" style="width: 45px; height: 32px;" onchange="guardarComportamientoFinal(this, {{ fila.matricula.pk }})">
+                            <option value="A" {% if fila.comportamiento_fin.valor == 'A' %}selected{% endif %}>A</option>
+                            <option value="B" {% if fila.comportamiento_fin.valor == 'B' or not fila.comportamiento_fin %}selected{% endif %}>B</option>
+                            <option value="C" {% if fila.comportamiento_fin.valor == 'C' %}selected{% endif %}>C</option>
+                            <option value="D" {% if fila.comportamiento_fin.valor == 'D' %}selected{% endif %}>D</option>
+                            <option value="E" {% if fila.comportamiento_fin.valor == 'E' %}selected{% endif %}>E</option>
+                        </select>
+                    </td>
+                    
+                    <td id="total-fila-{{ fila.matricula.pk }}" style="font-weight: 700; color: #475569;">
+                        {{ fila.total_general|floatformat:2 }}
+                    </td>
+                    <td class="final-overall" id="prom-fila-{{ fila.matricula.pk }}">
+                        {{ fila.promedio_general|floatformat:2 }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function guardarExamenMateria(input, matriculaId, subjectId) {
+    let valor = parseFloat(input.value);
+    if (isNaN(valor)) valor = 0;
+    if (valor > 10) valor = 10;
+    if (valor < 0) valor = 0;
+    input.value = valor.toFixed(2);
+    
+    fetch("{% url 'guardar_nota' %}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": "{{ csrf_token }}" },
+        body: JSON.stringify({
+            matricula_id: matriculaId,
+            materia_id: subjectId,
+            through_id: 0, 
+            trimestre: 4, 
+            valor: valor
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            input.classList.add('saved');
+            setTimeout(() => input.classList.remove('saved'), 800);
+            
+            // Actualizar Totales de la Fila (Backend returns these now)
+            if (data.total_anual !== undefined) {
+                const tel = document.getElementById(`total-fila-${matriculaId}`);
+                if (tel) tel.textContent = data.total_anual.toFixed(2);
+            }
+            if (data.promedio_anual !== undefined) {
+                const pel = document.getElementById(`prom-fila-${matriculaId}`);
+                if (pel) pel.textContent = data.promedio_anual.toFixed(2);
+            }
+            
+            recalcularMateriaYFila(matriculaId, subjectId, valor);
+        }
+    });
+}
+
+function recalcularMateriaYFila(matriculaId, subjectId, examVal) {
+    const promTEl = document.getElementById(`prom-t-${matriculaId}-${subjectId}`);
+    const finalMatEl = document.getElementById(`final-mat-${matriculaId}-${subjectId}`);
+    
+    if (!promTEl || !finalMatEl) return;
+    
+    const promT = parseFloat(promTEl.textContent) || 0;
+    let finalMat = promT;
+    if (examVal > 0) finalMat = (promT + examVal) / 2;
+    
+    finalMatEl.textContent = finalMat.toFixed(2);
+}
+
+function guardarComportamientoFinal(select, matriculaId) {
+    fetch("{% url 'guardar_comportamiento' %}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": "{{ csrf_token }}" },
+        body: JSON.stringify({ matricula_id: matriculaId, trimestre: 4, valor: select.value })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            select.classList.add('saved');
+            setTimeout(() => select.classList.remove('saved'), 800);
+        }
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'grades/base.html' %}
+
+{% block title %}Matricular Estudiante | Sistema Académico{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{% url 'matricula_list' %}" style="text-decoration: none; color: var(--text-muted); font-size: 0.875rem; font-weight: 600;">← Volver a la lista</a>
+    <h2 style="font-size: 1.875rem; font-weight: 700; margin-top: 0.5rem;">Matricular Estudiante</h2>
+</div>
+
+<div class="form-container">
+    <form method="post">
+        {% csrf_token %}
+        
+        {% for field in form %}
+        <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+                <div style="color: #b91c1c; font-size: 0.75rem; margin-top: 0.25rem;">
+                    {{ field.errors }}
+                </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary" style="flex: 1; justify-content: center;">Guardar Matrícula</button>
+            <a href="{% url 'matricula_list' %}" class="btn btn-outline" style="flex: 1; justify-content: center;">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

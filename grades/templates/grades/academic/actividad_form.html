@@ -1,0 +1,35 @@
+{% extends 'grades/base.html' %}
+
+{% block title %}{% if form.instance.pk %}Editar{% else %}Nuevo{% endif %} Insumo | Sistema Académico{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h2 style="font-size: 1.875rem; font-weight: 700;">{% if form.instance.pk %}Editar{% else %}Nuevo{% endif %} Insumo</h2>
+    <p style="color: var(--text-muted);">Completa la información del insumo para el catálogo global.</p>
+</div>
+
+<div class="form-container">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="{{ form.nombre.id_for_label }}">Nombre del Insumo</label>
+            {{ form.nombre }}
+            {% if form.nombre.errors %}
+            <div style="color: #ef4444; font-size: 0.75rem; margin-top: 0.25rem;">
+                {{ form.nombre.errors }}
+            </div>
+            {% endif %}
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary" style="flex: 1; justify-content: center;">
+                {% if form.instance.pk %}Guardar Cambios{% else %}Crear Insumo{% endif %}
+            </button>
+            <a href="{% url 'actividad_list' %}" class="btn btn-outline" style="flex: 1; justify-content: center;">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

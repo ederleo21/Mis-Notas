@@ -1,0 +1,36 @@
+{% extends 'grades/base.html' %}
+
+{% block title %}Confirmar Eliminación | Sistema Académico{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+        <h2 style="font-size: 1.875rem; font-weight: 700; color: #1e293b;">¿Confirmar Eliminación?</h2>
+        <p style="color: #64748b; margin-top: 0.5rem;">
+            Estás a punto de eliminar: <br>
+            <strong style="color: #1e293b; font-size: 1.25rem;">"{{ object }}"</strong>
+        </p>
+    </div>
+
+    <div style="background-color: #fff1f2; border: 1px solid #fda4af; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 2rem;">
+        <h3 style="color: #9f1239; font-weight: 700; font-size: 0.875rem; text-transform: uppercase; margin-bottom: 0.75rem;">¡Atención!</h3>
+        <p style="color: #be123c; font-size: 0.875rem; line-height: 1.5;">
+            Esta acción es irreversible y podría afectar otros datos relacionados en el sistema.
+            Por favor, asegúrate de que realmente deseas proceder.
+        </p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: flex; gap: 1rem;">
+            <button type="button" onclick="window.history.back()" class="btn btn-outline" style="flex: 1; text-align: center;">
+                Cancelar
+            </button>
+            <button type="submit" class="btn btn-danger" style="flex: 1; background-color: #ef4444;">
+                Eliminar Permanentemente
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

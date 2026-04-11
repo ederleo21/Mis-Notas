@@ -1,0 +1,39 @@
+{% extends 'grades/base.html' %}
+
+{% block title %}Catálogo de Insumos | Sistema Académico{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+        <h2 style="font-size: 1.875rem; font-weight: 700;">Catálogo de Insumos</h2>
+        <p style="color: var(--text-muted);">Gestiona las actividades globales disponibles para los docentes.</p>
+    </div>
+    <a href="{% url 'actividad_create' %}" class="btn btn-primary">+ Nuevo Insumo</a>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre del Insumo / Actividad</th>
+                <th style="text-align: right;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for actividad in actividades %}
+            <tr>
+                <td style="font-weight: 600;">{{ actividad.nombre }}</td>
+                <td style="text-align: right;">
+                    <a href="{% url 'actividad_update' actividad.pk %}" style="color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.875rem; margin-right: 1.5rem;">Editar</a>
+                    <a href="{% url 'actividad_delete' actividad.pk %}" style="color: #ef4444; text-decoration: none; font-weight: 600; font-size: 0.875rem;">Eliminar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="2" style="text-align: center; color: var(--text-muted); padding: 3rem;">No hay insumos registrados en el catálogo.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Cuenta — Sistema Académico</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(79, 70, 229, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+            animation: bgFloat 15s ease-in-out infinite;
+        }
+
+        @keyframes bgFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(2%, -2%) rotate(1deg); }
+            66% { transform: translate(-1%, 1%) rotate(-0.5deg); }
+        }
+
+        .login-container {
+            position: relative; z-index: 1;
+            width: 100%; max-width: 440px; padding: 1.5rem;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1.5rem;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: cardAppear 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes cardAppear {
+            from { opacity: 0; transform: translateY(20px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .login-header { text-align: center; margin-bottom: 1.75rem; }
+
+        .login-icon {
+            width: 64px; height: 64px;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            border-radius: 1rem;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.25rem;
+            font-size: 1.75rem; color: white;
+            box-shadow: 0 8px 24px rgba(79, 70, 229, 0.4);
+        }
+
+        .login-header h1 { color: #f8fafc; font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .login-header p { color: #94a3b8; font-size: 0.875rem; }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .form-group { margin-bottom: 1rem; }
+        .form-group label {
+            display: block; color: #cbd5e1; font-size: 0.8rem;
+            font-weight: 600; margin-bottom: 0.4rem;
+            text-transform: uppercase; letter-spacing: 0.05em;
+        }
+
+        .form-group input {
+            width: 100%; padding: 0.8rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem; color: #f1f5f9;
+            font-family: 'Poppins', sans-serif; font-size: 0.9rem;
+            transition: all 0.25s ease; outline: none;
+        }
+        .form-group input::placeholder { color: #475569; }
+        .form-group input:focus {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.08);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        .btn-login {
+            width: 100%; padding: 0.85rem;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: white; border: none; border-radius: 0.75rem;
+            font-family: 'Poppins', sans-serif; font-size: 1rem;
+            font-weight: 700; cursor: pointer; transition: all 0.3s ease;
+            margin-top: 0.25rem; position: relative; overflow: hidden;
+        }
+        .btn-login::before {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4); }
+        .btn-login:hover::before { left: 100%; }
+
+        .error-msg {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5; padding: 0.75rem 1rem;
+            border-radius: 0.75rem; font-size: 0.8rem;
+            margin-bottom: 1rem; animation: shake 0.4s ease-in-out;
+        }
+        .error-msg ul { list-style: none; padding: 0; margin: 0; }
+        .error-msg li { margin-bottom: 0.25rem; }
+        .error-msg li:last-child { margin-bottom: 0; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .footer-text {
+            text-align: center; margin-top: 1.5rem;
+            color: #94a3b8; font-size: 0.85rem;
+        }
+        .footer-text a {
+            color: #818cf8; text-decoration: none; font-weight: 600;
+            transition: color 0.2s;
+        }
+        .footer-text a:hover { color: #a5b4fc; }
+
+        .particle {
+            position: fixed; width: 4px; height: 4px;
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 50%; pointer-events: none;
+        }
+        .particle:nth-child(1) { top: 20%; left: 10%; animation: float 6s ease-in-out infinite; }
+        .particle:nth-child(2) { top: 60%; left: 80%; animation: float 8s ease-in-out infinite 1s; }
+        .particle:nth-child(3) { top: 40%; left: 50%; animation: float 7s ease-in-out infinite 2s; }
+        .particle:nth-child(4) { top: 80%; left: 20%; animation: float 9s ease-in-out infinite 0.5s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+            50% { transform: translateY(-20px) translateX(10px); opacity: 0.8; }
+        }
+    </style>
+</head>
+<body>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-icon">✏️</div>
+                <h1>Crear Cuenta</h1>
+                <p>Registra tus datos para acceder al sistema</p>
+            </div>
+
+            {% if form.errors %}
+            <div class="error-msg">
+                <ul>
+                {% for field in form %}
+                    {% for error in field.errors %}
+                    <li>{{ field.label }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <form method="post" id="register-form">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="id_first_name">Nombres</label>
+                        <input type="text" name="first_name" id="id_first_name" placeholder="Ej: María Elena" value="{{ form.first_name.value|default:'' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_last_name">Apellidos</label>
+                        <input type="text" name="last_name" id="id_last_name" placeholder="Ej: Jerez Cárdenas" value="{{ form.last_name.value|default:'' }}" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="id_username">Usuario</label>
+                    <input type="text" name="username" id="id_username" placeholder="Ej: mjerez" value="{{ form.username.value|default:'' }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="id_password1">Contraseña</label>
+                    <input type="password" name="password1" id="id_password1" placeholder="••••••••" required>
+                </div>
+                <div class="form-group">
+                    <label for="id_password2">Confirmar Contraseña</label>
+                    <input type="password" name="password2" id="id_password2" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-login" id="btn-register">Crear mi Cuenta</button>
+            </form>
+
+            <div class="footer-text">
+                ¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia Sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('register-form').addEventListener('submit', function() {
+            const btn = document.getElementById('btn-register');
+            btn.textContent = 'Creando cuenta...';
+            btn.style.opacity = '0.7';
+            btn.style.pointerEvents = 'none';
+        });
+    </script>
+</body>
+</html>

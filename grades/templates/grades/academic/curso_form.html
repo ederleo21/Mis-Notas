@@ -1,0 +1,52 @@
+{% extends 'grades/base.html' %}
+
+{% block title %}Crear Curso | Sistema Académico{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{% url 'curso_list' %}" style="text-decoration: none; color: var(--text-muted); font-size: 0.875rem; font-weight: 600;">← Volver a la lista</a>
+</div>
+
+<div class="form-container" style="max-width: 800px;">
+    <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;">Nuevo Curso</h2>
+    
+    <form method="post" style="display: flex; flex-direction: column; gap: 1rem;">
+        {% csrf_token %}
+        <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+            <!-- Columna Izquierda: Datos Básicos -->
+            <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 1rem;">
+                {% for field in form %}
+                    {% if field.name != 'subjects' %}
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="{{ field.id_for_label }}" style="font-size: 0.85rem; font-weight: 700; color: #475569;">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <div style="color: #b91c1c; font-size: 0.75rem; margin-top: 0.25rem;">{{ field.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Columna Derecha: Materias -->
+            <div style="flex: 1; min-width: 250px;">
+                <div class="form-group" style="height: 100%; display: flex; flex-direction: column; margin-bottom: 0;">
+                    <label for="{{ form.subjects.id_for_label }}" style="font-size: 0.85rem; font-weight: 700; color: #475569;">Materias del Curso</label>
+                    <div style="flex-grow: 1;">
+                        {{ form.subjects }}
+                    </div>
+                    <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.5rem;">Mantén presionada la tecla Ctrl (o Cmd en Mac) para seleccionar múltiples materias.</p>
+                    {% if form.subjects.errors %}
+                    <div style="color: #b91c1c; font-size: 0.75rem; margin-top: 0.25rem;">{{ form.subjects.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Curso</button>
+            <a href="{% url 'curso_list' %}" class="btn btn-outline" style="flex: 1; justify-content: center;">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

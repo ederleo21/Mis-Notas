@@ -1,0 +1,34 @@
+{% extends 'grades/base.html' %}
+
+{% block title %}Eliminar Insumo | Sistema Académico{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h2 style="font-size: 1.875rem; font-weight: 700;">Eliminar Insumo</h2>
+    <p style="color: var(--text-muted);">Confirma que deseas eliminar esta actividad del catálogo global.</p>
+</div>
+
+<div class="form-container" style="text-align: center;">
+    <p style="font-size: 1.125rem; margin-bottom: 2rem;">
+        ¿Estás seguro de que deseas eliminar el insumo <strong>"{{ object.nombre }}"</strong>?
+    </p>
+    
+    <div style="background-color: #fff7ed; border-left: 4px solid #f97316; padding: 1rem; margin-bottom: 2rem; text-align: left;">
+        <p style="color: #9a3412; font-size: 0.875rem;">
+            <strong>Nota:</strong> Esta acción eliminará la actividad de todos los cursos donde haya sido seleccionada. Las notas asociadas podrían verse afectadas.
+        </p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn" style="flex: 1; background-color: #ef4444; color: white; justify-content: center;">
+                Sí, Eliminar Permanentemente
+            </button>
+            <a href="{% url 'actividad_list' %}" class="btn btn-outline" style="flex: 1; justify-content: center;">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
