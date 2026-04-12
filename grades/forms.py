@@ -31,6 +31,14 @@ class CursoForm(forms.ModelForm):
             'subjects': forms.SelectMultiple(attrs={'class': 'form-input', 'size': 8}),
         }
 
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields['periodo'].queryset = PeriodoLectivo.objects.filter(docente=user)
+            self.fields['nivel'].queryset = Nivel.objects.filter(docente=user)
+            # subjects remains shared (all Subjects displayed)
+
 
 class EstudianteForm(forms.ModelForm):
     class Meta:
@@ -49,6 +57,13 @@ class MatriculaForm(forms.ModelForm):
             'estudiante': forms.Select(attrs={'class': 'form-input'}),
             'curso': forms.Select(attrs={'class': 'form-input'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields['estudiante'].queryset = Estudiante.objects.filter(docente=user)
+            self.fields['curso'].queryset = Curso.objects.filter(docente=user)
 
 class SubjectForm(forms.ModelForm):
     class Meta:

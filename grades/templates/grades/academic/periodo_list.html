@@ -12,28 +12,34 @@
 </div>
 
 <div class="table-container">
-    <table>
-        <thead>
-            <tr>
-                <th>Nombre del Periodo</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for periodo in periodos %}
-            <tr>
-                <td style="font-weight: 600;">{{ periodo.nombre }}</td>
-                <td style="display: flex; gap: 1rem;">
-                    <button onclick="openEditModal('{% url 'periodo_update' periodo.pk %}', 'Editar Año Lectivo')" style="background: none; border: none; color: var(--primary); font-weight: 600; font-size: 0.875rem; cursor: pointer; padding: 0;">Editar</button>
-                    <button onclick="openDeleteModal('{% url 'periodo_delete' periodo.pk %}', '{{ periodo.nombre }}')" style="background: none; border: none; color: #ef4444; font-weight: 600; font-size: 0.875rem; cursor: pointer; padding: 0;">Eliminar</button>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="2" style="text-align: center; color: var(--text-muted); padding: 3rem;">No hay periodos registrados.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre del Periodo</th>
+                    <th style="width: 100px; text-align: center;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for periodo in periodos %}
+                <tr>
+                    <td style="font-weight: 600;">{{ periodo.nombre }}</td>
+                    <td style="display: flex; gap: 0.5rem; justify-content: center;">
+                        <button onclick="openEditModal('{% url 'periodo_update' periodo.pk %}', 'Editar Año Lectivo')" class="btn-icon btn-icon-edit" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="openDeleteModal('{% url 'periodo_delete' periodo.pk %}', '{{ periodo.nombre }}')" class="btn-icon btn-icon-delete" title="Eliminar">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2" style="text-align: center; color: var(--text-muted); padding: 3rem;">No hay periodos registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

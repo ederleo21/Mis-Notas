@@ -13,6 +13,7 @@ TRIMESTRE_CHOICES = [
 
 class PeriodoLectivo(models.Model):
     nombre = models.CharField(max_length=50, verbose_name="Año Lectivo")
+    docente = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="periodos")
 
     def __str__(self):
         return self.nombre
@@ -23,7 +24,7 @@ class PeriodoLectivo(models.Model):
 class Nivel(models.Model):
     nombre = models.CharField(max_length=50, verbose_name="Grado/Curso") 
     paralelo = models.CharField(max_length=5, verbose_name="Paralelo") 
-
+    docente = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="niveles")
     def __str__(self):
         return f"{self.nombre} {self.paralelo}"
 
@@ -31,8 +32,8 @@ class Nivel(models.Model):
         verbose_name_plural = "Niveles"
 
 class Curso(models.Model):
-    periodo = models.ForeignKey(PeriodoLectivo, on_delete=models.CASCADE)
-    nivel = models.ForeignKey(Nivel, on_delete=models.CASCADE)
+    periodo = models.ForeignKey(PeriodoLectivo, on_delete=models.PROTECT)
+    nivel = models.ForeignKey(Nivel, on_delete=models.PROTECT)
     subjects = models.ManyToManyField('Subject', blank=True, related_name='cursos')
     actividades = models.ManyToManyField('Actividad', blank=True, related_name='cursos', through='CursoActividad')
     docente = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="cursos")
@@ -49,13 +50,14 @@ class Subject(models.Model):
 class Estudiante(models.Model):
     apellidos = models.CharField(max_length=100)
     nombres = models.CharField(max_length=100)
+    docente = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="estudiantes")
 
     def __str__(self):
         return f"{self.apellidos} {self.nombres}"
 
 class Matricula(models.Model):
-    estudiante = models.ForeignKey(Estudiante, on_delete=models.CASCADE)
-    curso = models.ForeignKey(Curso, on_delete=models.CASCADE)
+    estudiante = models.ForeignKey(Estudiante, on_delete=models.PROTECT)
+    curso = models.ForeignKey(Curso, on_delete=models.PROTECT)
 
     def __str__(self):
         return f"{self.estudiante} ({self.curso})"
@@ -144,8 +146,8 @@ class Actividad(models.Model):
 
 class CursoActividad(models.Model):
     curso = models.ForeignKey(Curso, on_delete=models.CASCADE)
-    actividad = models.ForeignKey(Actividad, on_delete=models.CASCADE)
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, null=True, blank=True)
+    actividad = models.ForeignKey(Actividad, on_delete=models.PROTECT)
+    subject = models.ForeignKey(Subject, on_delete=models.PROTECT, null=True, blank=True)
     orden = models.PositiveIntegerField(default=0)
     trimestre = models.PositiveSmallIntegerField(choices=TRIMESTRE_CHOICES, default=1)
 
@@ -157,7 +159,7 @@ class CursoActividad(models.Model):
 class Nota(models.Model):
     matricula = models.ForeignKey(Matricula, on_delete=models.CASCADE)
     curso_actividad = models.ForeignKey(CursoActividad, on_delete=models.CASCADE, null=True, blank=True)
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    subject = models.ForeignKey(Subject, on_delete=models.PROTECT)
     trimestre = models.PositiveIntegerField(choices=TRIMESTRE_CHOICES, default=1)
     valor = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
 

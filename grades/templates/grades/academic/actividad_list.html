@@ -12,28 +12,34 @@
 </div>
 
 <div class="table-container">
-    <table>
-        <thead>
-            <tr>
-                <th>Nombre del Insumo / Actividad</th>
-                <th style="text-align: right;">Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for actividad in actividades %}
-            <tr>
-                <td style="font-weight: 600;">{{ actividad.nombre }}</td>
-                <td style="text-align: right;">
-                    <a href="{% url 'actividad_update' actividad.pk %}" style="color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.875rem; margin-right: 1.5rem;">Editar</a>
-                    <a href="{% url 'actividad_delete' actividad.pk %}" style="color: #ef4444; text-decoration: none; font-weight: 600; font-size: 0.875rem;">Eliminar</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="2" style="text-align: center; color: var(--text-muted); padding: 3rem;">No hay insumos registrados en el catálogo.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre del Insumo / Actividad</th>
+                    <th style="width: 100px; text-align: center;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for actividad in actividades %}
+                <tr>
+                    <td style="font-weight: 600;">{{ actividad.nombre }}</td>
+                    <td style="display: flex; gap: 0.5rem; justify-content: center;">
+                        <button onclick="openEditModal('{% url 'actividad_update' actividad.pk %}', 'Editar Insumo')" class="btn-icon btn-icon-edit" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="openDeleteModal('{% url 'actividad_delete' actividad.pk %}', '{{ actividad.nombre }}')" class="btn-icon btn-icon-delete" title="Eliminar">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2" style="text-align: center; color: var(--text-muted); padding: 3rem;">No hay insumos registrados en el catálogo.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

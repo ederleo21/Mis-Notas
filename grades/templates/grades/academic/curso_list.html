@@ -12,38 +12,44 @@
 </div>
 
 <div class="table-container">
-    <table>
-        <thead>
-            <tr>
-                <th>Nivel</th>
-                <th>Periodo</th>
-                <th>Docente</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for curso in cursos %}
-            <tr>
-                <td style="font-weight: 600;">{{ curso.nivel }}</td>
-                <td>{{ curso.periodo }}</td>
-                <td>
-                    {% if curso.docente.get_full_name %}
-                        {{ curso.docente.get_full_name }}
-                    {% else %}
-                        {{ curso.docente.username }}
-                    {% endif %}
-                </td>
-                <td style="display: flex; gap: 1rem;">
-                    <button onclick="openEditModal('{% url 'curso_update' curso.pk %}', 'Editar Curso', '800px')" style="background: none; border: none; color: var(--primary); font-weight: 600; font-size: 0.875rem; cursor: pointer; padding: 0;">Editar</button>
-                    <button onclick="openDeleteModal('{% url 'curso_delete' curso.pk %}', '{{ curso.nivel }} {{ curso.periodo }}')" style="background: none; border: none; color: #ef4444; font-weight: 600; font-size: 0.875rem; cursor: pointer; padding: 0;">Eliminar</button>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 3rem;">No hay cursos registrados.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Información del Curso</th>
+                    <th>Docente Asignado</th>
+                    <th style="width: 100px; text-align: center;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for curso in cursos %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 700; color: var(--primary); font-size: 1rem;">{{ curso.nivel }}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">Periodo: {{ curso.periodo }}</div>
+                    </td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div style="width: 24px; height: 24px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: var(--primary); font-weight: 700;">{{ curso.docente.username|slice:":1"|upper }}</div>
+                            <span style="font-weight: 500;">{{ curso.docente.get_full_name|default:curso.docente.username }}</span>
+                        </div>
+                    </td>
+                    <td style="display: flex; gap: 0.5rem; justify-content: center;">
+                        <button onclick="openEditModal('{% url 'curso_update' curso.pk %}', 'Editar Curso', '800px')" class="btn-icon btn-icon-edit" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="openDeleteModal('{% url 'curso_delete' curso.pk %}', '{{ curso.nivel }} {{ curso.periodo }}')" class="btn-icon btn-icon-delete" title="Eliminar">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 3rem;">No hay cursos registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

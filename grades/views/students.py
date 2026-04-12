@@ -8,6 +8,21 @@ import json
 from ..models import Estudiante, Matricula, Curso
 from ..forms import EstudianteForm, MatriculaForm
 
+from django.db.models import ProtectedError
+from django.contrib import messages
+
+# Mixin para manejar errores de protección
+class ProtectedDeleteMixin:
+    def post(self, request, *args, **kwargs):
+        try:
+            return super().post(request, *args, **kwargs)
+        except ProtectedError:
+            error_message = "No se puede eliminar este registro porque tiene datos asociados (ej: cursos, notas o alumnos)."
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'error': error_message}, status=400)
+            messages.error(request, error_message)
+            return self.get(request, *args, **kwargs)
+
 # Estudiantes (Filtrado: solo los matriculados en cursos del usuario)
 class EstudianteListView(LoginRequiredMixin, ListView):
     model = Estudiante
@@ -15,9 +30,7 @@ class EstudianteListView(LoginRequiredMixin, ListView):
     context_object_name = 'estudiantes'
 
     def get_queryset(self):
-        mis_cursos = Curso.objects.filter(docente=self.request.user)
-        ids = Matricula.objects.filter(curso__in=mis_cursos).values_list('estudiante_id', flat=True)
-        return Estudiante.objects.filter(pk__in=ids)
+        return Estudiante.objects.filter(docente=self.request.user)
 
 class EstudianteCreateView(LoginRequiredMixin, CreateView):
     model = Estudiante
@@ -25,16 +38,26 @@ class EstudianteCreateView(LoginRequiredMixin, CreateView):
     template_name = 'grades/students/estudiante_form.html'
     success_url = reverse_lazy('estudiante_list')
 
+    def form_valid(self, form):
+        form.instance.docente = self.request.user
+        return super().form_valid(form)
+
 class EstudianteUpdateView(LoginRequiredMixin, UpdateView):
     model = Estudiante
     form_class = EstudianteForm
     template_name = 'grades/students/estudiante_form.html'
     success_url = reverse_lazy('estudiante_list')
 
-class EstudianteDeleteView(LoginRequiredMixin, DeleteView):
+    def get_queryset(self):
+        return Estudiante.objects.filter(docente=self.request.user)
+
+class EstudianteDeleteView(LoginRequiredMixin, ProtectedDeleteMixin, DeleteView):
     model = Estudiante
     template_name = 'generic/confirm_delete.html'
     success_url = reverse_lazy('estudiante_list')
+
+    def get_queryset(self):
+        return Estudiante.objects.filter(docente=self.request.user)
 
 # Matriculas (Filtrado por cursos del usuario)
 class MatriculaListView(LoginRequiredMixin, ListView):
@@ -51,16 +74,32 @@ class MatriculaCreateView(LoginRequiredMixin, CreateView):
     template_name = 'grades/students/matricula_form.html'
     success_url = reverse_lazy('matricula_list')
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
 class MatriculaUpdateView(LoginRequiredMixin, UpdateView):
     model = Matricula
     form_class = MatriculaForm
     template_name = 'grades/students/matricula_form.html'
     success_url = reverse_lazy('matricula_list')
 
-class MatriculaDeleteView(LoginRequiredMixin, DeleteView):
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def get_queryset(self):
+        return Matricula.objects.filter(curso__docente=self.request.user)
+
+class MatriculaDeleteView(LoginRequiredMixin, ProtectedDeleteMixin, DeleteView):
     model = Matricula
     template_name = 'generic/confirm_delete.html'
     success_url = reverse_lazy('matricula_list')
+
+    def get_queryset(self):
+        return Matricula.objects.filter(curso__docente=self.request.user)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -84,7 +123,8 @@ class CargaMasivaEstudiantesView(LoginRequiredMixin, View):
                 # Crear estudiante
                 estudiante = Estudiante.objects.create(
                     apellidos=apellidos,
-                    nombres=nombres
+                    nombres=nombres,
+                    docente=request.user
                 )
                 # Matricular
                 Matricula.objects.create(
