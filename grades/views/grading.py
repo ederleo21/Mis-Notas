@@ -182,7 +182,7 @@ class GetMateriasPorCursoView(LoginRequiredMixin, View):
         curso_id = request.GET.get('curso_id')
         try:
             curso = Curso.objects.get(pk=curso_id)
-            materias = list(curso.subjects.all().order_by('orden').values('id', 'nombre'))
+            materias = list(curso.subjects.all().order_by('nombre').values('id', 'nombre'))
             return JsonResponse({'ok': True, 'materias': materias})
         except Exception as e:
             return JsonResponse({'ok': False, 'error': str(e)}, status=400)

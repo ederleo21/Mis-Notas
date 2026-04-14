@@ -3,6 +3,32 @@
 {% block title %}Cuadro Final | {{ curso_sel }}{% endblock %}
 
 {% block extra_css %}
+<script>
+    (function() {
+        const u = new URLSearchParams(window.location.search);
+        const isValid = (val) => val && val !== 'null' && val !== 'undefined';
+        const c_local = localStorage.getItem('anual_filtro_curso');
+        const m_local = localStorage.getItem('anual_filtro_materia');
+
+        // 1. Si la URL ya tiene curso, actualizamos el localStorage
+        if (u.has('curso')) {
+            localStorage.setItem('anual_filtro_curso', u.get('curso'));
+            localStorage.setItem('anual_filtro_materia', u.get('materia') || '');
+            return;
+        }
+
+        // 2. Si la URL no tiene nada pero hay algo en localStorage, redirigimos
+        if (isValid(c_local)) {
+            document.documentElement.classList.add('is-redirecting');
+            const m_param = m_local ? `&materia=${m_local}` : '';
+            window.location.search = `?curso=${c_local}${m_param}`;
+        }
+    })();
+</script>
+<style>
+    /* Ocultar el sitio solo si la redirección activa está en curso */
+    .is-redirecting body { display: none !important; }
+</style>
 <style>
     /* ---- CONFIGURACION DE CONTENEDOR (ANCHO TOTAL) ---- */
     .container {
@@ -100,7 +126,7 @@
     
     .report-table th {
         background: #f8fafc;
-        padding: 1rem 0.6rem;
+        padding: 0.75rem 0.5rem;
         font-weight: 700;
         border: 1px solid #e2e8f0;
         color: #1e293b;
@@ -141,7 +167,7 @@
     .report-table tr:hover .col-sticky { background: #f8fafc; }
 
     .report-table td {
-        padding: 0.85rem 0.75rem;
+        padding: 0.65rem 0.75rem;
         border: 1px solid #f1f5f9;
         font-size: 0.95rem;
         color: #334155;
@@ -150,13 +176,14 @@
 
     /* INPUTS EQUILIBRADOS */
     .input-grade {
-        width: 65px;
-        height: 38px;
+        width: 90px;
+        height: 32px;
         text-align: center;
         border: 2px solid #cbd5e1;
         border-radius: 8px;
         font-weight: 500;
         font-size: 0.95rem;
+        font-family: 'Poppins', sans-serif;
         transition: all 0.2s;
     }
     .input-grade:focus { border-color: var(--primary); outline: none; }
@@ -249,7 +276,7 @@
             <div class="toolbar-group">
                 <div style="display: flex; align-items: center; gap: 0.4rem;">
                     <span style="font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Curso:</span>
-                    <select class="form-input" style="width: 200px;" onchange="location.href='?materia={{ materia_sel_id }}&curso='+this.value">
+                    <select class="form-input" style="width: 200px;" onchange="actualizarFiltrosAnual('curso', this.value)">
                         <option value="">-- Seleccionar --</option>
                         {% for c in cursos %}
                         <option value="{{ c.pk }}" {% if curso_sel_id == c.pk|stringformat:"i" %}selected{% endif %}>{{ c }}</option>
@@ -259,7 +286,7 @@
 
                 <div style="display: flex; align-items: center; gap: 0.4rem;">
                     <span style="font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Materia:</span>
-                    <select class="form-input" style="width: 220px;" onchange="location.href='?curso={{ curso_sel_id }}&materia='+this.value">
+                    <select class="form-input" style="width: 220px;" onchange="actualizarFiltrosAnual('materia', this.value)">
                         <option value="">-- CUADRO GENERAL --</option>
                         {% for s in subjects_list %}
                         <option value="{{ s.pk }}" {% if materia_sel_id == s.pk|stringformat:"i" %}selected{% endif %}>{{ s.nombre }}</option>
@@ -478,5 +505,26 @@ function guardarComportamientoFinal(select, matriculaId) {
         }
     });
 }
+
+    // ---- PERSISTENCIA DE FILTROS ----
+    function actualizarFiltrosAnual(tipo, valor) {
+        let curso = "{{ curso_sel_id }}";
+        let materia = "{{ materia_sel_id }}";
+
+        if (tipo === 'curso') {
+            curso = valor;
+            materia = ''; // Al cambiar de curso, reseteamos materia para evitar errores
+        } else {
+            materia = valor;
+        }
+
+        if (curso) {
+            localStorage.setItem('anual_filtro_curso', curso);
+            localStorage.setItem('anual_filtro_materia', materia);
+            location.href = `?curso=${curso}&materia=${materia}`;
+        } else {
+            location.href = '?';
+        }
+    }
 </script>
 {% endblock %}

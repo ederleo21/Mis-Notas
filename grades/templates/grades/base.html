@@ -403,8 +403,8 @@
         }
 
         .modal-content {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 2rem;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 2.5rem;
             border-radius: 1.5rem;
             width: 90%;
             max-width: 500px;
@@ -453,6 +453,93 @@
             background: #e2e8f0;
             color: #0f172a;
             transform: rotate(90deg);
+        }
+
+        /* Delete Modal Modern Design */
+        .delete-dialog {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .delete-icon {
+            width: 80px;
+            height: 80px;
+            background: #fff1f2;
+            color: #ef4444;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.25rem;
+            margin-bottom: 1.5rem;
+            border: 4px solid #fee2e2;
+            animation: scaleInModal 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .delete-dialog h4 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.75rem;
+        }
+
+        .delete-dialog p {
+            color: #64748b;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 2.5rem;
+        }
+
+        .delete-buttons {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .btn-modal {
+            flex: 1;
+            padding: 1rem;
+            border-radius: 1rem;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-modal-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .btn-modal-secondary:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        .btn-modal-danger {
+            background: #ef4444;
+            color: white;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-modal-danger:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-modal:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        @keyframes scaleInModal {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
 
         /* Ocultar elementos redundantes en el modal */
@@ -588,19 +675,15 @@
             const overlay = document.getElementById('modal-overlay');
             overlay.classList.remove('active');
             document.body.style.overflow = 'auto';
+            // Wait for transition before clearing
             setTimeout(() => {
                 if (!overlay.classList.contains('active')) {
                     document.getElementById('modal-body').innerHTML = '';
+                    document.getElementById('modal-title').closest('.modal-header').style.display = 'flex';
+                    const modalContent = document.querySelector('.modal-content');
+                    modalContent.style.maxWidth = '500px';
                 }
-            }, 400); // Wait for animation
-        }
-
-        // Close on click outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('modal-overlay');
-            if (event.target == modal) {
-                closeModal();
-            }
+            }, 300);
         }
 
         async function openEditModal(url, title, maxWidth = '500px') {
@@ -677,51 +760,75 @@
             }
         }
 
-        function openDeleteModal(url, itemName) {
-            document.getElementById('modal-title').textContent = 'Confirmar Eliminación';
+        function openConfirmDialog({title, message, confirmText, cancelText, variant, onConfirm}) {
+            const modalHeader = document.getElementById('modal-title').closest('.modal-header');
+            modalHeader.style.display = 'none'; 
+            
+            const modalContent = document.querySelector('.modal-content');
+            modalContent.style.maxWidth = '400px';
+
+            const icon = variant === 'danger' ? 'fa-exclamation-triangle' : 'fa-question-circle';
+            const iconColor = variant === 'danger' ? '#ef4444' : '#6366f1';
+            const iconBg = variant === 'danger' ? '#fff1f2' : '#eef2ff';
+            const buttonColor = variant === 'danger' ? '#ef4444' : '#6366f1';
+
             document.getElementById('modal-body').innerHTML = `
-                <div style="text-align: center; margin-bottom: 2rem;">
-                    <div style="font-size: 3.5rem; margin-bottom: 1.5rem; animation: pulse 2s infinite;">⚠️</div>
-                    <p style="color: #64748b; font-size: 1.125rem; line-height: 1.6;">¿Estás seguro de que deseas eliminar <br><strong style="color: #0f172a;">${itemName}</strong>?</p>
-                    <p style="font-size: 0.875rem; color: #ef4444; margin-top: 1rem; background: #fff1f2; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #fee2e2;">Esta acción es irreversible y borrará permanentemente todos los datos asociados.</p>
+                <div class="delete-dialog">
+                    <div class="delete-icon" style="background: ${iconBg}; color: ${iconColor}; border-color: ${variant === 'danger' ? '#fee2e2' : '#c7d2fe'}">
+                        <i class="fas ${icon}"></i>
+                    </div>
+                    <h4>${title}</h4>
+                    <p>${message}</p>
+                    
+                    <div class="delete-buttons">
+                        <button type="button" onclick="closeModal()" class="btn-modal btn-modal-secondary">
+                            ${cancelText || 'Cancelar'}
+                        </button>
+                        <button type="button" id="confirm-dialog-btn" class="btn-modal" style="background: ${buttonColor}; color: white;">
+                            ${confirmText || 'Confirmar'}
+                        </button>
+                    </div>
                 </div>
-                <form id="delete-form" style="display: flex; gap: 1rem;">
-                    <button type="button" onclick="closeModal()" class="btn btn-outline" style="flex: 1; border-radius: 0.75rem; font-weight: 600;">No, mantener</button>
-                    <button type="submit" class="btn btn-danger" style="flex: 1; background-color: #ef4444; border-radius: 0.75rem; font-weight: 600;">Sí, eliminar</button>
-                </form>
-                <style>@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }</style>
             `;
             openModal();
 
-            document.getElementById('delete-form').onsubmit = async (e) => {
-                e.preventDefault();
-                const btn = e.target.querySelector('.btn-danger');
+            document.getElementById('confirm-dialog-btn').onclick = async () => {
+                const btn = document.getElementById('confirm-dialog-btn');
                 btn.disabled = true;
-                btn.textContent = 'Eliminando...';
-                
-                try {
-                    const res = await fetch(url, {
-                        method: 'POST',
-                        headers: { 
-                            'X-CSRFToken': '{{ csrf_token }}',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    });
-                    if (res.ok) {
-                        window.location.reload();
-                    } else {
-                        const data = await res.json().catch(() => ({}));
-                        showToast(data.error || "No se puede eliminar este registro porque tiene datos asociados.", "error");
-                        btn.disabled = false;
-                        btn.textContent = 'Sí, eliminar';
-                    }
-                } catch (err) {
-                    console.error(err);
-                    showToast("Error de conexión al intentar eliminar.", "error");
-                    btn.disabled = false;
-                    btn.textContent = 'Sí, eliminar';
-                }
+                btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Procesando...`;
+                if (onConfirm) await onConfirm();
+                closeModal();
             };
+        }
+
+        function openDeleteModal(url, itemName) {
+            openConfirmDialog({
+                title: '¿Eliminar registro?',
+                message: `Estás por eliminar <strong>"${itemName}"</strong>.<br>Esta acción no se puede deshacer.`,
+                confirmText: 'Sí, Eliminar',
+                variant: 'danger',
+                onConfirm: async () => {
+                    try {
+                        const res = await fetch(url, {
+                            method: 'POST',
+                            headers: { 
+                                'X-CSRFToken': '{{ csrf_token }}',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        if (res.ok) {
+                            showToast("Registro eliminado correctamente", "success");
+                            setTimeout(() => window.location.reload(), 800);
+                        } else {
+                            const data = await res.json().catch(() => ({}));
+                            showToast(data.error || "No se puede eliminar porque tiene datos asociados.", "error");
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        showToast("Error de conexión al intentar eliminar.", "error");
+                    }
+                }
+            });
         }
     </script>
     {% block extra_js %}{% endblock %}

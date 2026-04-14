@@ -322,7 +322,13 @@ def generar_excel_boletines_individuales(curso_id):
             t1 = float(mat.get_subject_average(s, 1))
             t2 = float(mat.get_subject_average(s, 2))
             t3 = float(mat.get_subject_average(s, 3))
-            pf = (t1+t2+t3)/3
+            prom_t = (t1 + t2 + t3) / 3
+            
+            # Obtener examen final para el promedio anual
+            ex_n = Nota.objects.filter(matricula=mat, subject=s, trimestre=4, curso_actividad__isnull=True).first()
+            ex_v = float(ex_n.valor) if ex_n else 0
+            pf = (prom_t + ex_v) / 2 if ex_v > 0 else prom_t
+            
             suma_promedios += pf
             
             for i, v in enumerate([t1, t2, t3, pf]):
@@ -337,19 +343,17 @@ def generar_excel_boletines_individuales(curso_id):
         pg = ws.cell(row=r_data, column=5, value=suma_promedios/subjects.count() if subjects.count()>0 else 0)
         pg.font=Font(bold=True); pg.number_format='0.00'; pg.alignment=CENTER_ALIGN; pg.border=BORDER
         
-        # COMPORTAMIENTO (Fila vacía después del promedio general)
+        # COMPORTAMIENTO
         r_comp = r_data + 2
         ws.cell(row=r_comp, column=1, value="COMPORTAMIENTO").border=BORDER
-        c_final_val = 'B'
         for i in range(1, 4):
             c_trim = Comportamiento.objects.filter(matricula=mat, trimestre=i).first()
             val = c_trim.valor if c_trim else 'B'
             sc = ws.cell(row=r_comp, column=1+i, value=val)
             sc.alignment=CENTER_ALIGN; sc.border=BORDER
-            if i == 3: c_final_val = val # O lógica de promedio si aplica
             
         cf = Comportamiento.objects.filter(matricula=mat, trimestre=4).first()
-        cv = ws.cell(row=r_comp, column=5, value=cf.valor if cf else c_final_val)
+        cv = ws.cell(row=r_comp, column=5, value=cf.valor if cf else 'B')
         cv.alignment=CENTER_ALIGN; cv.border=BORDER
         
         # FIRMAS

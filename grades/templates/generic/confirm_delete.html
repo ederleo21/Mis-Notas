@@ -3,34 +3,48 @@
 {% block title %}Confirmar Eliminación | Sistema Académico{% endblock %}
 
 {% block content %}
-<div class="form-container">
-    <div style="text-align: center; margin-bottom: 2rem;">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
-        <h2 style="font-size: 1.875rem; font-weight: 700; color: #1e293b;">¿Confirmar Eliminación?</h2>
-        <p style="color: #64748b; margin-top: 0.5rem;">
-            Estás a punto de eliminar: <br>
-            <strong style="color: #1e293b; font-size: 1.25rem;">"{{ object }}"</strong>
-        </p>
+<div class="form-container" style="max-width: 550px; text-align: center; padding: 3rem 2rem; border-radius: 1.5rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+    <!-- Icono Principal -->
+    <div style="margin-bottom: 2rem; display: inline-flex; align-items: center; justify-content: center; width: 90px; height: 90px; background: #fff1f2; border-radius: 50%; color: #ef4444; border: 4px solid #fee2e2;">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size: 2.5rem;"></i>
     </div>
 
-    <div style="background-color: #fff1f2; border: 1px solid #fda4af; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 2rem;">
-        <h3 style="color: #9f1239; font-weight: 700; font-size: 0.875rem; text-transform: uppercase; margin-bottom: 0.75rem;">¡Atención!</h3>
-        <p style="color: #be123c; font-size: 0.875rem; line-height: 1.5;">
-            Esta acción es irreversible y podría afectar otros datos relacionados en el sistema.
-            Por favor, asegúrate de que realmente deseas proceder.
+    <h2 style="font-size: 1.75rem; font-weight: 800; color: #1e293b; margin-bottom: 1rem; letter-spacing: -0.025em;">
+        ¿Confirmar Eliminación?
+    </h2>
+    
+    <p style="color: #64748b; font-size: 1.1rem; margin-bottom: 2.5rem; line-height: 1.6;">
+        Estás a punto de eliminar permanentemente: <br>
+        <strong style="color: #0f172a; font-size: 1.3rem;">"${{ object }}$"</strong>
+    </p>
+
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.25rem; margin-bottom: 2.5rem; text-align: left; display: flex; gap: 1rem; align-items: flex-start;">
+        <i class="fa-solid fa-circle-info" style="color: #6366f1; margin-top: 0.25rem;"></i>
+        <p style="color: #475569; font-size: 0.875rem; line-height: 1.5; margin: 0;">
+            <strong>Nota importante:</strong> Esta acción no se puede deshacer. Todos los datos relacionados con este registro serán eliminados del sistema.
         </p>
     </div>
 
     <form method="post">
         {% csrf_token %}
         <div style="display: flex; gap: 1rem;">
-            <button type="button" onclick="window.history.back()" class="btn btn-outline" style="flex: 1; text-align: center;">
+            <a href="javascript:window.history.back()" class="btn" style="flex: 1; background: #f1f5f9; color: #475569; border-radius: 0.85rem; font-weight: 700; height: 52px; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: all 0.2s;">
                 Cancelar
-            </button>
-            <button type="submit" class="btn btn-danger" style="flex: 1; background-color: #ef4444;">
-                Eliminar Permanentemente
+            </a>
+            <button type="submit" class="btn" style="flex: 1; background: #ef4444; color: white; border-radius: 0.85rem; font-weight: 700; height: 52px; border: none; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2); cursor: pointer; transition: all 0.2s;">
+                Eliminar Registro
             </button>
         </div>
     </form>
 </div>
+
+<style>
+    .btn:hover {
+        transform: translateY(-2px);
+        filter: brightness(0.95);
+    }
+    .btn:active {
+        transform: translateY(0);
+    }
+</style>
 {% endblock %}

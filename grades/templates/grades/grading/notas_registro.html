@@ -3,6 +3,33 @@
 {% block title %}Registro de Notas | Sistema Académico{% endblock %}
 
 {% block extra_css %}
+<script>
+    (function() {
+        const u = new URLSearchParams(window.location.search);
+        // Función de validación para evitar datos basura del localStorage
+        const isValid = (val) => val && val !== 'null' && val !== 'undefined' && val !== '';
+
+        if (u.has('curso') && u.has('trimestre') && u.has('materia')) {
+            localStorage.setItem('notas_filtro_curso', u.get('curso'));
+            localStorage.setItem('notas_filtro_trimestre', u.get('trimestre'));
+            localStorage.setItem('notas_filtro_materia', u.get('materia'));
+            return;
+        }
+
+        const c = localStorage.getItem('notas_filtro_curso');
+        const t = localStorage.getItem('notas_filtro_trimestre');
+        const m = localStorage.getItem('notas_filtro_materia');
+        
+        if (isValid(c) && isValid(t) && isValid(m)) {
+            document.documentElement.classList.add('is-redirecting');
+            window.location.search = `?curso=${c}&trimestre=${t}&materia=${m}`;
+        }
+    })();
+</script>
+<style>
+    /* Ocultar el sitio solo si la redirección activa está en curso */
+    .is-redirecting body { display: none !important; }
+</style>
 <style>
     /* ---- TOOLBAR & CONTEXT ---- */
     /* ---- TOOLBAR MODERNA (COMPACTA Y DISTRIBUIDA) ---- */
@@ -202,9 +229,10 @@
     }
 
     .grade-input.saved {
-        background: #dcfce7;
-        border-color: #22c55e;
-    }    .grade-table tbody tr:hover {
+        background: #f0fdf4 !important; /* Verde menta muy suave */
+        border-color: #86efac !important; /* Borde verde suave */
+    }
+    .grade-table tbody tr:hover {
         background: #f1f5f9;
     }
     .grade-table tbody tr:nth-child(even) {
@@ -289,7 +317,7 @@
             <form method="get" id="filterForm" style="display: flex; gap: 0.75rem; align-items: center;">
                 <div class="toolbar-group">
                     <span style="font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Curso:</span>
-                    <select name="curso" id="cursoSelect" class="form-input" style="width: 220px;" onchange="actualizarMaterias(this.value)">
+                    <select name="curso" id="cursoSelect" class="form-input" style="width: 220px;">
                         <option value="">-- Seleccionar --</option>
                         {% for c in cursos %}
                         <option value="{{ c.pk }}" {% if curso_sel_id == c.pk|stringformat:"d" %}selected{% endif %}>{{ c }}</option>
@@ -298,7 +326,7 @@
                 </div>
                 <div class="toolbar-group">
                     <span style="font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Trimestre:</span>
-                    <select name="trimestre" class="form-input" style="width: 220px;" onchange="this.form.submit()">
+                    <select name="trimestre" id="trimestreSelect" class="form-input" style="width: 220px;">
                         <option value="">-- Seleccionar --</option>
                         {% for t in trimestres %}
                         <option value="{{ t.value }}" {% if trimestre_sel_val == t.value|stringformat:"d" %}selected{% endif %}>{{ t.label }}</option>
@@ -307,7 +335,7 @@
                 </div>
                 <div class="toolbar-group">
                     <span style="font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Materia:</span>
-                    <select name="materia" id="materiaSelect" class="form-input" style="width: 220px;" onchange="this.form.submit()">
+                    <select name="materia" id="materiaSelect" class="form-input" style="width: 220px;">
                         <option value="">-- Seleccionar --</option>
                         {% for m in materias %}
                         <option value="{{ m.pk }}" {% if materia_sel_id == m.pk|stringformat:"d" %}selected{% endif %}>{{ m.nombre }}</option>
@@ -435,7 +463,7 @@
                         onchange="guardarNota(this)">
                 </td>
                 {% endfor %}
-                <td class="avg-cell" id="avg-{{ fila.matricula.pk }}">{{ fila.promedio }}</td>
+                <td class="avg-cell" id="avg-{{ fila.matricula.pk }}">{{ fila.promedio|floatformat:2 }}</td>
                 <td style="font-weight: 700; border-left: 2px solid #e2e8f0;">
                     <select class="grade-input" style="width: 50px; font-weight: 900;" onchange="guardarComportamiento(this, {{ fila.matricula.pk }})">
                         <option value="A" {% if fila.comportamiento_trim.valor == 'A' %}selected{% endif %}>A</option>
@@ -445,7 +473,7 @@
                         <option value="E" {% if fila.comportamiento_trim.valor == 'E' %}selected{% endif %}>E</option>
                     </select>
                 </td>
-                <td style="font-weight: 700;" id="total-{{ fila.matricula.pk }}">{{ fila.total_trim }}</td>
+                <td style="font-weight: 700;" id="total-{{ fila.matricula.pk }}">{{ fila.total_trim|floatformat:2 }}</td>
                 <td style="font-weight: 900; color: #be185d; background: #fce7f3; font-size: 1.1em;" id="trim-avg-{{ fila.matricula.pk }}">{{ fila.promedio_trim|floatformat:2 }}</td>
             </tr>
             {% empty %}
@@ -575,6 +603,33 @@
         </div>
     </div>
 </div>
+
+{# ---- MODAL EDITAR ESTUDIANTE ---- #}
+<div class="modal-overlay" id="modalEditarEstudiante">
+    <div class="modal-box" style="max-width: 450px;">
+        <h3 style="display: flex; align-items: center; gap: 0.75rem; color: #6366f1;">
+            <i class="fa-solid fa-user-pen"></i>
+            Editar Estudiante
+        </h3>
+        <input type="hidden" id="editMatriculaId">
+        <div class="form-group" style="margin-top: 1.5rem;">
+            <label style="font-size: 0.75rem; font-weight: 800; color: #64748b; margin-bottom: 0.5rem; display: block;">APELLIDOS</label>
+            <input type="text" id="editApellidos" class="form-input" style="height: 46px; font-size: 1rem;">
+        </div>
+        <div class="form-group">
+            <label style="font-size: 0.75rem; font-weight: 800; color: #64748b; margin-bottom: 0.5rem; display: block;">NOMBRES</label>
+            <input type="text" id="editNombres" class="form-input" style="height: 46px; font-size: 1rem;">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem;">
+            <button class="btn-sm-outline" onclick="cerrarModalEditar()" style="height: 46px; border: 1px solid #e2e8f0; padding: 0 1.5rem; border-radius: 12px; font-weight: 700; background: white; color: #475569; cursor: pointer;">Cancelar</button>
+            <button class="btn-sm-primary" onclick="confirmarEdicionEstudiante()" 
+                    style="height: 46px; background: #6366f1; color: white; padding: 0 1.75rem; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2); transition: all 0.3s;"
+                    onmouseover="this.style.background='#4f46e5'; this.style.transform='translateY(-2px)'"
+                    onmouseout="this.style.background='#6366f1'; this.style.transform='translateY(0)'">Guardar Cambios</button>
+        </div>
+    </div>
+</div>
 {% else %}
     <!-- WELCOME STATE / EMPTY -->
     <div style="background: white; border-radius: 2rem; border: 2px dashed #cbd5e1; padding: 4rem 2rem; text-align: center; margin-top: 0.5rem; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); width: 100%;">
@@ -598,7 +653,85 @@
     const MATERIA_ID = '{{ materia_sel_id }}';
     const CSRF_TOKEN = '{{ csrf_token }}';
 
-    // ---- MODALES ----
+    // ---- PERSISTENCIA DE FILTROS (LOCALSTORAGE) ----
+    document.addEventListener('DOMContentLoaded', () => {
+        const uParams = new URLSearchParams(window.location.search);
+        const hasFilters = uParams.has('curso') && uParams.has('trimestre') && uParams.has('materia');
+
+        if (hasFilters) {
+            localStorage.setItem('notas_filtro_curso', uParams.get('curso'));
+            localStorage.setItem('notas_filtro_trimestre', uParams.get('trimestre'));
+            localStorage.setItem('notas_filtro_materia', uParams.get('materia'));
+        }
+    });
+
+    // ---- LÓGICA DE FILTRADO UNIFICADA ----
+    const filterForm = document.getElementById('filterForm');
+    const cursoSelect = document.getElementById('cursoSelect');
+    const trimestreSelect = document.getElementById('trimestreSelect');
+    const materiaSelect = document.getElementById('materiaSelect');
+
+    function evaluarEnvioFiltros() {
+        if (cursoSelect.value && trimestreSelect.value && materiaSelect.value) {
+            localStorage.setItem('notas_filtro_curso', cursoSelect.value);
+            localStorage.setItem('notas_filtro_trimestre', trimestreSelect.value);
+            localStorage.setItem('notas_filtro_materia', materiaSelect.value);
+            filterForm.submit();
+        }
+    }
+
+    async function cargarMaterias(cursoId) {
+        if (!cursoId) {
+            materiaSelect.innerHTML = '<option value="">-- Seleccionar --</option>';
+            return;
+        }
+        
+        const originalHTML = materiaSelect.innerHTML;
+        materiaSelect.innerHTML = '<option value="">Cargando materias...</option>';
+        materiaSelect.disabled = true;
+
+        try {
+            const res = await fetch(`{% url 'get_materias_por_curso' %}?curso_id=${cursoId}`);
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error || "Fallo en el servidor");
+            
+            if (data.ok && data.materias) {
+                let options = '<option value="">-- Seleccionar Materia --</option>';
+                data.materias.forEach(m => {
+                    options += `<option value="${m.id}">${m.nombre}</option>`;
+                });
+                materiaSelect.innerHTML = options;
+
+                const uParams = new URLSearchParams(window.location.search);
+                if (uParams.has('materia')) {
+                    materiaSelect.value = uParams.get('materia');
+                }
+            }
+        } catch (err) {
+            console.error("Error al cargar materias:", err);
+            showToast(`Error: ${err.message}`, "error");
+            materiaSelect.innerHTML = '<option value="">-- Error al cargar --</option>';
+        } finally {
+            materiaSelect.disabled = false;
+        }
+    }
+
+    if (cursoSelect) {
+        cursoSelect.addEventListener('change', (e) => {
+            materiaSelect.value = ""; // Reset materia al cambiar curso
+            cargarMaterias(e.target.value);
+            evaluarEnvioFiltros();
+        });
+    }
+
+    if (trimestreSelect) {
+        trimestreSelect.addEventListener('change', () => evaluarEnvioFiltros());
+    }
+
+    if (materiaSelect) {
+        materiaSelect.addEventListener('change', () => evaluarEnvioFiltros());
+    }
     function abrirModalAlumnos() { document.getElementById('modalAlumnos').classList.add('active'); }
     function cerrarModal() { 
         document.getElementById('modalAlumnos').classList.remove('active'); 
@@ -650,7 +783,15 @@
     // ---- GESTIÓN DE NOTAS ----
     function guardarNota(input) {
         const val = parseFloat(input.value);
-        if(isNaN(val) || val < 0 || val > 10) { input.classList.add('invalid'); return; }
+        
+        // Si la nota es inválida, quitamos el verde y ponemos el rojo
+        if(isNaN(val) || val < 0 || val > 10) { 
+            input.classList.remove('saved');
+            input.classList.add('invalid'); 
+            return; 
+        }
+        
+        // Si es válida, quitamos el rojo y procedemos a guardar
         input.classList.remove('invalid');
         
         fetch("{% url 'guardar_nota' %}", {
@@ -668,7 +809,6 @@
                 document.getElementById(`avg-${input.dataset.matricula}`).textContent = data.promedio.toFixed(2);
                 document.getElementById(`total-${input.dataset.matricula}`).textContent = data.total_trim.toFixed(2);
                 document.getElementById(`trim-avg-${input.dataset.matricula}`).textContent = data.promedio_trim.toFixed(2);
-                setTimeout(() => input.classList.remove('saved'), 1000);
             }
         });
     }
@@ -682,7 +822,6 @@
                 sel.classList.add('saved');
                 document.getElementById(`total-${matId}`).textContent = data.total_trim.toFixed(2);
                 document.getElementById(`trim-avg-${matId}`).textContent = data.promedio_trim.toFixed(2);
-                setTimeout(() => sel.classList.remove('saved'), 1000);
             }
         });
     }
@@ -698,12 +837,18 @@
     }
     
     function eliminarInsumo(caId) { 
-        if(confirm('¿Seguro que deseas quitar este insumo del curso?')) {
-            fetch("{% url 'eliminar_insumo' %}", {
-                method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN},
-                body: JSON.stringify({ through_id: caId })
-            }).then(res => res.json()).then(data => data.ok && location.reload());
-        }
+        openConfirmDialog({
+            title: '¿Quitar este insumo?',
+            message: 'Al quitar este insumo se borrarán todas las notas registradas en él para este curso y trimestre.',
+            confirmText: 'Sí, quitar',
+            variant: 'danger',
+            onConfirm: () => {
+                return fetch("{% url 'eliminar_insumo' %}", {
+                    method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN},
+                    body: JSON.stringify({ through_id: caId })
+                }).then(res => res.json()).then(data => data.ok && location.reload());
+            }
+        });
     }
     
     function reordenarInsumo(caId, dir) {
@@ -715,39 +860,52 @@
 
     // ---- ACCIONES ESTUDIANTES ----
     function eliminarMatricula(matId) { 
-        if(confirm('¿Eliminar matrícula de este curso? (No se borrará al estudiante del sistema)')) {
-            fetch("{% url 'eliminar_matricula' %}", {
-                method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN},
-                body: JSON.stringify({ matricula_id: matId })
-            }).then(res => res.json()).then(data => data.ok && location.reload());
-        }
+        openConfirmDialog({
+            title: '¿Eliminar matrícula?',
+            message: 'Se quitará al estudiante de este curso. Las notas históricas no se borrarán del sistema, pero no aparecerán en este reporte.',
+            confirmText: 'Sí, eliminar',
+            variant: 'danger',
+            onConfirm: () => {
+                return fetch("{% url 'eliminar_matricula' %}", {
+                    method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN},
+                    body: JSON.stringify({ matricula_id: matId })
+                }).then(res => res.json()).then(data => data.ok && location.reload());
+            }
+        });
     }
     
     function editarEstudiante(matId, ap, nom) {
-        const nap = prompt("Nuevos Apellidos:", ap);
-        const nnom = prompt("Nuevos Nombres:", nom);
-        if(nap && nnom) {
-            fetch("{% url 'editar_estudiante' %}", {
-                method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN},
-                body: JSON.stringify({ matricula_id: matId, apellidos: nap, nombres: nnom })
-            }).then(res => res.json()).then(data => data.ok && location.reload());
-        }
+        document.getElementById('editMatriculaId').value = matId;
+        document.getElementById('editApellidos').value = ap;
+        document.getElementById('editNombres').value = nom;
+        document.getElementById('modalEditarEstudiante').classList.add('active');
     }
 
-    // ---- FILTROS DINÁMICOS ----
-    function actualizarMaterias(cursoId) {
-        if(!cursoId) { 
-            document.getElementById('materiaSelect').innerHTML = '<option value="">-- Seleccionar --</option>'; 
-            return; 
+    function cerrarModalEditar() {
+        document.getElementById('modalEditarEstudiante').classList.remove('active');
+    }
+
+    function confirmarEdicionEstudiante() {
+        const matId = document.getElementById('editMatriculaId').value;
+        const ap = document.getElementById('editApellidos').value.trim();
+        const nom = document.getElementById('editNombres').value.trim();
+        
+        if(!ap || !nom) {
+            showToast("Por favor ingresa apellidos y nombres completos.", "warning");
+            return;
         }
-        fetch(`{% url 'get_materias_por_curso' %}?curso_id=${cursoId}`)
-            .then(res => res.json()).then(data => {
-                if(data.ok) {
-                    const sel = document.getElementById('materiaSelect');
-                    sel.innerHTML = '<option value="">-- Seleccionar --</option>' + 
-                        data.materias.map(m => `<option value="${m.id}">${m.nombre}</option>`).join('');
-                }
-            });
+
+        fetch("{% url 'editar_estudiante' %}", {
+            method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN},
+            body: JSON.stringify({ matricula_id: matId, apellidos: ap, nombres: nom })
+        }).then(res => res.json()).then(data => {
+            if(data.ok) {
+                showToast("Estudiante actualizado correctamente");
+                location.reload();
+            } else {
+                showToast(data.error || "Error al actualizar estudiante", "error");
+            }
+        });
     }
 
     // ---- INSUMOS BASE (SECUENCIAL) ----
@@ -780,15 +938,20 @@
     }
 
     function aplicarInsumosBase() {
-        if(ordenSeleccion.length === 0) { alert('Selecciona al menos una actividad.'); return; }
+        if(ordenSeleccion.length === 0) { 
+            showToast('Selecciona al menos una actividad.', 'warning'); 
+            return; 
+        }
         
         fetch("{% url 'asignar_insumos_base' %}", {
             method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN},
             body: JSON.stringify({ curso_id: CURSO_ID, trimestre: TRIMESTRE, actividades_ids: ordenSeleccion })
         }).then(res => res.json()).then(data => {
             if(data.ok) {
-                alert(`Se han asignado ${data.assigned} actividades base.`);
-                location.reload();
+                showToast(`Se han asignado ${data.assigned} actividades base.`);
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.error || "Error al asignar insumos base", "error");
             }
         });
     }

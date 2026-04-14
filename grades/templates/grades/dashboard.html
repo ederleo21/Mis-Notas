@@ -6,16 +6,17 @@
 <style>
     /* ---- HEADER & DASHBOARD AREA ---- */
     .dash-header {
-        margin-bottom: 25px;
+        margin-bottom: 40px;
         display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
     }
     .dash-header h2 {
-        font-size: 2.5rem;
-        font-weight: 800;
-        letter-spacing: -0.05em;
-        color: #0f172a;
+        font-size: 1.35rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #1e293b;
     }
     .dash-header p {
         color: #64748b;
@@ -159,29 +160,27 @@
 
 {% block content %}
 <div class="dash-header">
-    <div>
-        <p>👋 ¡Hola de nuevo!</p>
-        <h2>Bienvenido</h2>
-    </div>
+    <h2>👋 ¡Hola! Bienvenido, {{ user.get_full_name|default:user.username }}</h2>
+    <p>Has ingresado al panel de control académico.</p>
 </div>
 
 <div class="top-stats">
     <div class="stat-pill">
-        <div class="stat-pill-icon">👥</div>
+        <div class="stat-pill-icon" style="color: #6366f1; background: #eef2ff;"><i class="fa-solid fa-users"></i></div>
         <div class="stat-pill-info">
             <span class="s-val">{{ num_estudiantes }}</span>
             <span class="s-lab">Estudiantes</span>
         </div>
     </div>
     <div class="stat-pill">
-        <div class="stat-pill-icon">🏫</div>
+        <div class="stat-pill-icon" style="color: #f59e0b; background: #fffbeb;"><i class="fa-solid fa-school"></i></div>
         <div class="stat-pill-info">
             <span class="s-val">{{ num_cursos }}</span>
             <span class="s-lab">Cursos</span>
         </div>
     </div>
     <div class="stat-pill">
-        <div class="stat-pill-icon">📋</div>
+        <div class="stat-pill-icon" style="color: #10b981; background: #ecfdf5;"><i class="fa-solid fa-book-bookmark"></i></div>
         <div class="stat-pill-info">
             <span class="s-val">{{ num_materias }}</span>
             <span class="s-lab">Materias</span>
@@ -191,24 +190,24 @@
 
 <div class="main-grid">
     <a href="{% url 'notas_registro' %}" class="action-card c-v-1">
-        <div class="card-icon">📊</div>
+        <div class="card-icon"><i class="fa-solid fa-chart-line"></i></div>
         <h3>Registro de Notas</h3>
         <p>Gestiona calificaciones por materia y trimestre con cálculos en tiempo real.</p>
-        <div class="btn-enter">Ingresar <span>→</span></div>
+        <div class="btn-enter">Ingresar <i class="fa-solid fa-arrow-right" style="margin-left: 5px;"></i></div>
     </a>
 
     <a href="{% url 'periodo_list' %}" class="action-card c-v-2">
-        <div class="card-icon">🏫</div>
+        <div class="card-icon"><i class="fa-solid fa-sliders"></i></div>
         <h3>Gestión Académica</h3>
         <p>Configura años lectivos, cursos, paralelos y matriculación.</p>
-        <div class="btn-enter">Configurar <span>→</span></div>
+        <div class="btn-enter">Configurar <i class="fa-solid fa-arrow-right" style="margin-left: 5px;"></i></div>
     </a>
 
     <a href="{% url 'cuadro_anual' %}" class="action-card c-v-3">
-        <div class="card-icon">🏆</div>
+        <div class="card-icon"><i class="fa-solid fa-award"></i></div>
         <h3>Cuadro Final Anual</h3>
         <p>Consolidado anual de los 3 trimestres y promedio final por materia.</p>
-        <div class="btn-enter">Ver Cuadro Anual <span>→</span></div>
+        <div class="btn-enter">Ver Cuadro Anual <i class="fa-solid fa-arrow-right" style="margin-left: 5px;"></i></div>
     </a>
 </div>
 {% endblock %}
