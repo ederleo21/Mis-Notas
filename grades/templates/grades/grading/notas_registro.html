@@ -1,4 +1,5 @@
 {% extends 'grades/base.html' %}
+{% load grade_filters %}
 
 {% block title %}Registro de Notas | Sistema Académico{% endblock %}
 
@@ -6,19 +7,22 @@
 <script>
     (function() {
         const u = new URLSearchParams(window.location.search);
-        // Función de validación para evitar datos basura del localStorage
         const isValid = (val) => val && val !== 'null' && val !== 'undefined' && val !== '';
+        const UID = '{{ request.user.pk }}';
+        const KEY_C = `notas_filtro_${UID}_curso`;
+        const KEY_T = `notas_filtro_${UID}_trimestre`;
+        const KEY_M = `notas_filtro_${UID}_materia`;
 
         if (u.has('curso') && u.has('trimestre') && u.has('materia')) {
-            localStorage.setItem('notas_filtro_curso', u.get('curso'));
-            localStorage.setItem('notas_filtro_trimestre', u.get('trimestre'));
-            localStorage.setItem('notas_filtro_materia', u.get('materia'));
+            localStorage.setItem(KEY_C, u.get('curso'));
+            localStorage.setItem(KEY_T, u.get('trimestre'));
+            localStorage.setItem(KEY_M, u.get('materia'));
             return;
         }
 
-        const c = localStorage.getItem('notas_filtro_curso');
-        const t = localStorage.getItem('notas_filtro_trimestre');
-        const m = localStorage.getItem('notas_filtro_materia');
+        const c = localStorage.getItem(KEY_C);
+        const t = localStorage.getItem(KEY_T);
+        const m = localStorage.getItem(KEY_M);
         
         if (isValid(c) && isValid(t) && isValid(m)) {
             document.documentElement.classList.add('is-redirecting');
@@ -463,7 +467,7 @@
                         onchange="guardarNota(this)">
                 </td>
                 {% endfor %}
-                <td class="avg-cell" id="avg-{{ fila.matricula.pk }}">{{ fila.promedio|floatformat:2 }}</td>
+                <td class="avg-cell" id="avg-{{ fila.matricula.pk }}">{{ fila.promedio|trunc2 }}</td>
                 <td style="font-weight: 700; border-left: 2px solid #e2e8f0;">
                     <select class="grade-input" style="width: 50px; font-weight: 900;" onchange="guardarComportamiento(this, {{ fila.matricula.pk }})">
                         <option value="A" {% if fila.comportamiento_trim.valor == 'A' %}selected{% endif %}>A</option>
@@ -473,8 +477,8 @@
                         <option value="E" {% if fila.comportamiento_trim.valor == 'E' %}selected{% endif %}>E</option>
                     </select>
                 </td>
-                <td style="font-weight: 700;" id="total-{{ fila.matricula.pk }}">{{ fila.total_trim|floatformat:2 }}</td>
-                <td style="font-weight: 900; color: #be185d; background: #fce7f3; font-size: 1.1em;" id="trim-avg-{{ fila.matricula.pk }}">{{ fila.promedio_trim|floatformat:2 }}</td>
+                <td style="font-weight: 700;" id="total-{{ fila.matricula.pk }}">{{ fila.total_trim|trunc2 }}</td>
+                <td style="font-weight: 900; color: #be185d; background: #fce7f3; font-size: 1.1em;" id="trim-avg-{{ fila.matricula.pk }}">{{ fila.promedio_trim|trunc2 }}</td>
             </tr>
             {% empty %}
             <tr>
@@ -489,7 +493,7 @@
 
 {# ---- MODAL CARGA ALUMNOS ---- #}
 <div class="modal-overlay" id="modalAlumnos">
-    <div class="modal-box" style="max-width: 600px;">
+    <div class="modal-box" style="max-width: 850px;">
         <h3 style="display: flex; align-items: center; gap: 0.5rem;">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
             Gestión de Estudiantes
@@ -501,11 +505,11 @@
         <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
             <div style="flex: 1.2;">
                 <label style="font-size: 0.75rem; font-weight: 800; color: #64748b; margin-bottom: 0.5rem; display: block;">APELLIDOS</label>
-                <input type="text" id="inputApellido" class="form-input" style="height: 46px; font-size: 1rem !important;" placeholder="Ej: Perez">
+                <input type="text" id="inputApellido" class="form-input" style="width: 100%; height: 46px; font-size: 1rem !important;" placeholder="Ej: Perez">
             </div>
             <div style="flex: 1;">
                 <label style="font-size: 0.75rem; font-weight: 800; color: #64748b; margin-bottom: 0.5rem; display: block;">NOMBRES</label>
-                <input type="text" id="inputNombre" class="form-input" style="height: 46px; font-size: 1rem !important;" placeholder="Ej: Juan">
+                <input type="text" id="inputNombre" class="form-input" style="width: 100%; height: 46px; font-size: 1rem !important;" placeholder="Ej: Juan">
             </div>
             <div style="display: flex; align-items: flex-end;">
                 <button class="btn-sm btn-sm-primary" onclick="agregarALista()" 
@@ -652,16 +656,26 @@
     const TRIMESTRE = '{{ trimestre_sel_val }}';
     const MATERIA_ID = '{{ materia_sel_id }}';
     const CSRF_TOKEN = '{{ csrf_token }}';
+    const USER_ID = '{{ request.user.pk }}';
+
+    // Utility: truncate to 2 decimals WITHOUT rounding
+    function trunc2(val) {
+        return (Math.trunc(val * 100) / 100).toFixed(2);
+    }
 
     // ---- PERSISTENCIA DE FILTROS (LOCALSTORAGE) ----
+    const LS_KEY_C = `notas_filtro_${USER_ID}_curso`;
+    const LS_KEY_T = `notas_filtro_${USER_ID}_trimestre`;
+    const LS_KEY_M = `notas_filtro_${USER_ID}_materia`;
+
     document.addEventListener('DOMContentLoaded', () => {
         const uParams = new URLSearchParams(window.location.search);
         const hasFilters = uParams.has('curso') && uParams.has('trimestre') && uParams.has('materia');
 
         if (hasFilters) {
-            localStorage.setItem('notas_filtro_curso', uParams.get('curso'));
-            localStorage.setItem('notas_filtro_trimestre', uParams.get('trimestre'));
-            localStorage.setItem('notas_filtro_materia', uParams.get('materia'));
+            localStorage.setItem(LS_KEY_C, uParams.get('curso'));
+            localStorage.setItem(LS_KEY_T, uParams.get('trimestre'));
+            localStorage.setItem(LS_KEY_M, uParams.get('materia'));
         }
     });
 
@@ -673,9 +687,9 @@
 
     function evaluarEnvioFiltros() {
         if (cursoSelect.value && trimestreSelect.value && materiaSelect.value) {
-            localStorage.setItem('notas_filtro_curso', cursoSelect.value);
-            localStorage.setItem('notas_filtro_trimestre', trimestreSelect.value);
-            localStorage.setItem('notas_filtro_materia', materiaSelect.value);
+            localStorage.setItem(LS_KEY_C, cursoSelect.value);
+            localStorage.setItem(LS_KEY_T, trimestreSelect.value);
+            localStorage.setItem(LS_KEY_M, materiaSelect.value);
             filterForm.submit();
         }
     }
@@ -806,9 +820,9 @@
         }).then(res => res.json()).then(data => {
             if(data.ok) {
                 input.classList.add('saved');
-                document.getElementById(`avg-${input.dataset.matricula}`).textContent = data.promedio.toFixed(2);
-                document.getElementById(`total-${input.dataset.matricula}`).textContent = data.total_trim.toFixed(2);
-                document.getElementById(`trim-avg-${input.dataset.matricula}`).textContent = data.promedio_trim.toFixed(2);
+                document.getElementById(`avg-${input.dataset.matricula}`).textContent = trunc2(data.promedio);
+                document.getElementById(`total-${input.dataset.matricula}`).textContent = trunc2(data.total_trim);
+                document.getElementById(`trim-avg-${input.dataset.matricula}`).textContent = trunc2(data.promedio_trim);
             }
         });
     }
@@ -820,8 +834,8 @@
         }).then(res => res.json()).then(data => {
             if(data.ok) {
                 sel.classList.add('saved');
-                document.getElementById(`total-${matId}`).textContent = data.total_trim.toFixed(2);
-                document.getElementById(`trim-avg-${matId}`).textContent = data.promedio_trim.toFixed(2);
+                document.getElementById(`total-${matId}`).textContent = trunc2(data.total_trim);
+                document.getElementById(`trim-avg-${matId}`).textContent = trunc2(data.promedio_trim);
             }
         });
     }

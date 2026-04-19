@@ -5,7 +5,7 @@ from openpyxl.drawing.image import Image
 import os
 from django.conf import settings
 from django.contrib.auth.models import User
-from ..models import Curso, Subject, Matricula, CursoActividad, Nota, Comportamiento
+from ..models import Curso, Subject, Matricula, CursoActividad, Nota, Comportamiento, _trunc2
 
 # --- ESTILOS COMPARTIDOS ---
 HEADER_FONT = Font(bold=True, color="FFFFFF", size=10)
@@ -13,14 +13,15 @@ CENTER_ALIGN = Alignment(horizontal='center', vertical='center', wrap_text=True)
 VERTICAL_ALIGN = Alignment(textRotation=90, horizontal='center', vertical='center')
 BORDER = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
 
-FILL_SUBJECTS = PatternFill(start_color="004D40", end_color="004D40", fill_type="solid")
-FILL_AVG = PatternFill(start_color="B4C6E7", end_color="B4C6E7", fill_type="solid")
-FILL_INSUMOS = PatternFill(start_color="C6E0B4", end_color="C6E0B4", fill_type="solid")
-FILL_TOTAL = PatternFill(start_color="D81B60", end_color="D81B60", fill_type="solid")
-FILL_TRIMESTER = PatternFill(start_color="FCE4D6", end_color="FCE4D6", fill_type="solid")
-FILL_PROM_TRIM = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid") # Amarillo para prom. trimestral
-FILL_GRAY = PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid") # Gris para boletines
-FILL_LIGHT_GRAY = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid") # Gris claro para cabecera boletín
+# Paleta: Azul primario, Rosa secundario, Lavanda terciario
+FILL_SUBJECTS = PatternFill(start_color="2C5DA7", end_color="2C5DA7", fill_type="solid")      # Azul menos intenso - cabeceras de materias
+FILL_AVG = PatternFill(start_color="D6E4F0", end_color="D6E4F0", fill_type="solid")            # Azul claro - promedios
+FILL_INSUMOS = PatternFill(start_color="E8DEF8", end_color="E8DEF8", fill_type="solid")        # Lavanda - insumos
+FILL_TOTAL = PatternFill(start_color="E91E8C", end_color="E91E8C", fill_type="solid")          # Rosa - totales
+FILL_TRIMESTER = PatternFill(start_color="FCE4EC", end_color="FCE4EC", fill_type="solid")      # Rosa claro - promedios trimestre
+FILL_PROM_TRIM = PatternFill(start_color="EDE7F6", end_color="EDE7F6", fill_type="solid")      # Lavanda suave - prom. trimestral
+FILL_GRAY = PatternFill(start_color="D6E4F0", end_color="D6E4F0", fill_type="solid")           # Azul claro - boletines
+FILL_LIGHT_GRAY = PatternFill(start_color="EBF0FA", end_color="EBF0FA", fill_type="solid")     # Azul muy claro - cabecera boletín
 
 def _insertar_cabecera_institucional(ws, total_cols, titulo, docente_nombre, curso_full, is_resumido=False):
     """Inserta la cabecera institucional estándar en cualquier reporte Excel."""
@@ -34,7 +35,7 @@ def _insertar_cabecera_institucional(ws, total_cols, titulo, docente_nombre, cur
     # Ajuste de posición de logos basado en el ancho
     factor = 4 if is_resumido else 10
     col_logo1 = max(1, mid - factor)
-    col_logo2 = min(total_cols, mid + (factor - 3))
+    col_logo2 = (total_cols - 2) if is_resumido else min(total_cols, mid + (factor - 3))
     col_doc = max(1, mid - (factor + 2))
 
     try:
@@ -161,8 +162,8 @@ def generar_excel_anual(curso_id):
     matriculas = Matricula.objects.filter(curso=curso).select_related('estudiante')
     docente_nombre = f"{curso.docente.first_name} {curso.docente.last_name}" if curso.docente else "ADMINISTRADOR"
     
-    # 2 (N, Est) + 6 por materia + 3 (Comp, Total, Prom Final)
-    total_cols = 2 + (subjects.count() * 6) + 3
+    # 2 (N, Est) + 4 por materia (T1, T2, T3, Promedio) + 3 (Comp, Total, Prom Final)
+    total_cols = 2 + (subjects.count() * 4) + 3
     curso_full = f"{str(curso.nivel).upper()}   {str(curso.periodo)}"
     _insertar_cabecera_institucional(ws, total_cols, "REGISTRO DE CALIFICACIONES FINAL", docente_nombre, curso_full)
 
@@ -176,19 +177,17 @@ def generar_excel_anual(curso_id):
         ws.merge_cells(start_row=start_row, end_row=start_row+1, start_column=c, end_column=c)
 
     curr_col = 3
-    sub_headers = ["1ER TRIM.", "2DO TRIM.", "3ER TRIM.", "PROM. TRIM.", "EXAMEN FINAL", "PROMEDIO"]
+    sub_headers = ["1ER TRIM.", "2DO TRIM.", "3ER TRIM.", "PROMEDIO"]
     for s in subjects:
         cell = ws.cell(row=start_row, column=curr_col, value=s.nombre.upper())
         cell.font=HEADER_FONT; cell.fill=FILL_SUBJECTS; cell.alignment=CENTER_ALIGN; cell.border=BORDER
-        ws.merge_cells(start_row=start_row, end_row=start_row, start_column=curr_col, end_column=curr_col + 5)
+        ws.merge_cells(start_row=start_row, end_row=start_row, start_column=curr_col, end_column=curr_col + 3)
         
         for i, h in enumerate(sub_headers):
             sc = ws.cell(row=start_row+1, column=curr_col + i, value=h)
             sc.font=Font(bold=True, size=10); sc.alignment=VERTICAL_ALIGN; sc.border=BORDER
-            if i == 5: sc.fill = FILL_AVG
-            if i == 3: sc.fill = FILL_PROM_TRIM
-            if i == 4: sc.fill = FILL_INSUMOS
-        curr_col += 6
+            if i == 3: sc.fill = FILL_AVG
+        curr_col += 4
 
     for i, h in enumerate(["COMPORT.", "TOTAL", "PROM. FINAL"]):
         cell = ws.cell(row=start_row, column=curr_col + i, value=h)
@@ -205,20 +204,16 @@ def generar_excel_anual(curso_id):
         
         sc_col = 3
         for s in subjects:
-            t1 = float(mat.get_subject_average(s, 1))
-            t2 = float(mat.get_subject_average(s, 2))
-            t3 = float(mat.get_subject_average(s, 3))
-            pt = (t1 + t2 + t3) / 3
-            ex_n = Nota.objects.filter(matricula=mat, subject=s, trimestre=4, curso_actividad__isnull=True).first()
-            ex_v = float(ex_n.valor) if ex_n else 0
-            pf = (pt + ex_v) / 2 if ex_v > 0 else pt
+            t1 = mat.get_subject_average(s, 1)
+            t2 = mat.get_subject_average(s, 2)
+            t3 = mat.get_subject_average(s, 3)
+            pf = _trunc2((t1 + t2 + t3) / 3)
             
-            for i, v in enumerate([t1, t2, t3, pt, ex_v, pf]):
+            for i, v in enumerate([t1, t2, t3, pf]):
                 c = ws.cell(row=r_num, column=sc_col + i, value=v)
                 c.number_format = '0.00'; c.alignment = CENTER_ALIGN
-                if i == 5: c.font = Font(bold=True, size=12); c.fill = FILL_AVG
-                if i == 3: c.font = Font(bold=True, size=12); c.fill = FILL_PROM_TRIM
-            sc_col += 6
+                if i == 3: c.font = Font(bold=True, size=12); c.fill = FILL_AVG
+            sc_col += 4
 
         comp = Comportamiento.objects.filter(matricula=mat, trimestre=4).first()
         ws.cell(row=r_num, column=curr_col, value=comp.valor if comp else 'B').alignment=CENTER_ALIGN
@@ -319,15 +314,10 @@ def generar_excel_boletines_individuales(curso_id):
         suma_promedios = 0
         for s in subjects:
             ws.cell(row=r_data, column=1, value=s.nombre.upper()).border=BORDER
-            t1 = float(mat.get_subject_average(s, 1))
-            t2 = float(mat.get_subject_average(s, 2))
-            t3 = float(mat.get_subject_average(s, 3))
-            prom_t = (t1 + t2 + t3) / 3
-            
-            # Obtener examen final para el promedio anual
-            ex_n = Nota.objects.filter(matricula=mat, subject=s, trimestre=4, curso_actividad__isnull=True).first()
-            ex_v = float(ex_n.valor) if ex_n else 0
-            pf = (prom_t + ex_v) / 2 if ex_v > 0 else prom_t
+            t1 = mat.get_subject_average(s, 1)
+            t2 = mat.get_subject_average(s, 2)
+            t3 = mat.get_subject_average(s, 3)
+            pf = _trunc2((t1 + t2 + t3) / 3)
             
             suma_promedios += pf
             
@@ -340,7 +330,7 @@ def generar_excel_boletines_individuales(curso_id):
         ws.cell(row=r_data, column=1, value="PROMEDIO GENERAL").font=Font(bold=True)
         ws.cell(row=r_data, column=1).border=BORDER
         for i in range(2, 5): ws.cell(row=r_data, column=i).border=BORDER
-        pg = ws.cell(row=r_data, column=5, value=suma_promedios/subjects.count() if subjects.count()>0 else 0)
+        pg = ws.cell(row=r_data, column=5, value=_trunc2(suma_promedios/subjects.count()) if subjects.count()>0 else 0)
         pg.font=Font(bold=True); pg.number_format='0.00'; pg.alignment=CENTER_ALIGN; pg.border=BORDER
         
         # COMPORTAMIENTO

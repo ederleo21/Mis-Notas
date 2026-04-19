@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: sistema-academico
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn academic_sys.wsgi"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: DJANGO_SETTINGS_MODULE
+        value: academic_sys.settings
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: db-sistema
+          property: connectionString
+
+databases:
+  - name: db-sistema
+    plan: free

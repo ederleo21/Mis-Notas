@@ -1,8 +1,13 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.db.models import Avg, Sum
+import math
 
 User = get_user_model()
+
+def _trunc2(val):
+    """Trunca a 2 decimales SIN redondear."""
+    return math.trunc(float(val) * 100) / 100
 
 TRIMESTRE_CHOICES = [
     (1, 'Primer Trimestre'),
@@ -63,17 +68,7 @@ class Matricula(models.Model):
         return f"{self.estudiante} ({self.curso})"
 
     def get_subject_average(self, subject, trimestre):
-        """Calcula el promedio de una materia en un trimestre específico."""
-        if trimestre == 4 or trimestre == '4':
-            # Para el periodo final, buscamos la nota del Examen Final (sin curso_actividad)
-            nota = Nota.objects.filter(
-                matricula=self,
-                subject=subject,
-                trimestre=4,
-                curso_actividad__isnull=True
-            ).first()
-            return round(float(nota.valor), 2) if nota else 0.0
-
+        """Calcula el promedio de una materia en un trimestre específico (truncado a 2 decimales)."""
         from .models import CursoActividad
         # Filtrar los insumos específicos para esta materia y trimestre
         ca_list = CursoActividad.objects.filter(
@@ -93,40 +88,40 @@ class Matricula(models.Model):
         suma = (notas.aggregate(Sum('valor'))['valor__sum'] or 0)
         total_insumos = ca_list.count()
         
-        return float(suma) / total_insumos if total_insumos > 0 else 0.0
+        return _trunc2(float(suma) / total_insumos) if total_insumos > 0 else 0.0
+
+    def get_subject_final(self, subject):
+        """Calcula la nota final de una materia: promedio de los 3 trimestres (truncado)."""
+        t1 = self.get_subject_average(subject, 1)
+        t2 = self.get_subject_average(subject, 2)
+        t3 = self.get_subject_average(subject, 3)
+        return _trunc2((t1 + t2 + t3) / 3)
 
     def get_anual_total(self):
-        """Suma de los promedios finales de cada materia del curso (sin redondear para precisión)."""
+        """Suma de los promedios finales de cada materia del curso (truncado)."""
         subjects = self.curso.subjects.all()
         total = 0
         for s in subjects:
-            t1 = float(self.get_subject_average(s, 1))
-            t2 = float(self.get_subject_average(s, 2))
-            t3 = float(self.get_subject_average(s, 3))
-            prom_t = (t1 + t2 + t3) / 3
-            ex = Nota.objects.filter(matricula=self, subject=s, trimestre=4, curso_actividad__isnull=True).first()
-            ev = float(ex.valor) if ex else 0
-            pf = (prom_t + ev) / 2 if ev > 0 else prom_t
-            total += pf
-        return total
+            total += self.get_subject_final(s)
+        return _trunc2(total)
 
     def get_anual_average(self):
-        """Promedio anual general del estudiante."""
+        """Promedio anual general del estudiante (truncado)."""
         subjects_count = self.curso.subjects.count()
         if subjects_count > 0:
-            return self.get_anual_total() / subjects_count
+            return _trunc2(self.get_anual_total() / subjects_count)
         return 0.0
 
     def get_trimestre_total(self, trimestre):
-        """Suma de promedios de todas las materias asignadas al curso en un trimestre."""
+        """Suma de promedios de todas las materias asignadas al curso en un trimestre (truncado)."""
         subjects = self.curso.subjects.all()
-        return sum(self.get_subject_average(s, trimestre) for s in subjects)
+        return _trunc2(sum(self.get_subject_average(s, trimestre) for s in subjects))
 
     def get_trimestre_average(self, trimestre):
-        """Promedio general del trimestre (basado solo en materias del curso)."""
+        """Promedio general del trimestre (truncado)."""
         subjects_count = self.curso.subjects.count()
         if subjects_count > 0:
-            return self.get_trimestre_total(trimestre) / subjects_count
+            return _trunc2(self.get_trimestre_total(trimestre) / subjects_count)
         return 0.0
 
     class Meta:

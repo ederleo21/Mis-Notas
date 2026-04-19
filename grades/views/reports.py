@@ -1,7 +1,7 @@
 from django.views.generic import TemplateView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
-from ..models import Curso, Subject, Matricula, Nota, Comportamiento
+from ..models import Curso, Subject, Matricula, Nota, Comportamiento, _trunc2
 from ..utils.excel_reports import generar_excel_trimestre, generar_excel_anual, generar_excel_boletines_individuales
 import io
 
@@ -37,41 +37,28 @@ class CuadroAnualView(LoginRequiredMixin, TemplateView):
                     'comportamiento_fin': Comportamiento.objects.filter(matricula=mat, trimestre=4).first()
                 }
                 
-                suma_finales_materia = 0
                 subjects_to_process = [materia_sel] if materia_sel else subjects
                 
                 details = []
                 for s in subjects_to_process:
-                    t1 = float(mat.get_subject_average(s, 1))
-                    t2 = float(mat.get_subject_average(s, 2))
-                    t3 = float(mat.get_subject_average(s, 3))
-                    prom_t = (t1 + t2 + t3) / 3
-                    
-                    ex_n = Nota.objects.filter(matricula=mat, subject=s, trimestre=4, curso_actividad__isnull=True).first()
-                    ex_v = float(ex_n.valor) if ex_n else 0
-                    pf = (prom_t + ex_v) / 2 if ex_v > 0 else prom_t
+                    t1 = mat.get_subject_average(s, 1)
+                    t2 = mat.get_subject_average(s, 2)
+                    t3 = mat.get_subject_average(s, 3)
+                    pf = _trunc2((t1 + t2 + t3) / 3)
                         
                     details.append({
-                        'subject': s, 't1': t1, 't2': t2, 't3': t3, 'prom_t': prom_t, 'examen': ex_v, 'prom_final': pf
+                        'subject': s, 't1': t1, 't2': t2, 't3': t3, 'prom_final': pf
                     })
 
+                # Calculate totals using ALL subjects (even in single-materia view)
                 if not materia_sel:
-                    for d in details:
-                        suma_finales_materia += d['prom_final']
+                    suma_finales = _trunc2(sum(d['prom_final'] for d in details))
                 else:
-                    for s in subjects:
-                        t1 = float(mat.get_subject_average(s, 1))
-                        t2 = float(mat.get_subject_average(s, 2))
-                        t3 = float(mat.get_subject_average(s, 3))
-                        pt = (t1 + t2 + t3) / 3
-                        ex = Nota.objects.filter(matricula=mat, subject=s, trimestre=4, curso_actividad__isnull=True).first()
-                        ev = float(ex.valor) if ex else 0
-                        pf_full = (pt + ev) / 2 if ev > 0 else pt
-                        suma_finales_materia += pf_full
+                    suma_finales = _trunc2(sum(mat.get_subject_final(s) for s in subjects))
 
                 student_report['materias'] = details
-                student_report['total_general'] = suma_finales_materia
-                student_report['promedio_general'] = suma_finales_materia / subjects.count() if subjects.exists() else 0
+                student_report['total_general'] = suma_finales
+                student_report['promedio_general'] = _trunc2(suma_finales / subjects.count()) if subjects.exists() else 0
                 tabla.append(student_report)
 
             context['curso_sel'] = curso

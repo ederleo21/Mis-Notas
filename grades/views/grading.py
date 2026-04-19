@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import json
-from ..models import Curso, Subject, Actividad, Matricula, CursoActividad, Nota, Comportamiento
+from ..models import Curso, Subject, Actividad, Matricula, CursoActividad, Nota, Comportamiento, _trunc2
 from ..forms import ActividadForm
 
 class RegistroNotasView(LoginRequiredMixin, TemplateView):
@@ -73,7 +73,7 @@ class RegistroNotasView(LoginRequiredMixin, TemplateView):
                     if nota_obj:
                         total += float(nota_obj.valor)
                         count += 1
-                fila['promedio'] = round(total / count, 2) if count > 0 else ''
+                fila['promedio'] = _trunc2(total / count) if count > 0 else ''
                 fila['comportamiento_trim'] = Comportamiento.objects.filter(matricula=mat, trimestre=trimestre).first()
                 fila['total_trim'] = mat.get_trimestre_total(trimestre)
                 fila['promedio_trim'] = mat.get_trimestre_average(trimestre)
@@ -136,7 +136,7 @@ class GuardarNotaView(LoginRequiredMixin, View):
             notas_qs = Nota.objects.filter(matricula=matricula, curso_actividad_id__in=through_ids)
             total = sum(float(n.valor) for n in notas_qs)
             count = len(through_ids)
-            promedio = round(total / count, 2) if count > 0 else 0
+            promedio = _trunc2(total / count) if count > 0 else 0
 
             return JsonResponse({
                 'ok': True,

@@ -1,4 +1,5 @@
 {% extends 'grades/base.html' %}
+{% load grade_filters %}
 
 {% block title %}Cuadro Final | {{ curso_sel }}{% endblock %}
 
@@ -7,13 +8,16 @@
     (function() {
         const u = new URLSearchParams(window.location.search);
         const isValid = (val) => val && val !== 'null' && val !== 'undefined';
-        const c_local = localStorage.getItem('anual_filtro_curso');
-        const m_local = localStorage.getItem('anual_filtro_materia');
+        const UID = '{{ request.user.pk }}';
+        const KEY_C = `anual_filtro_${UID}_curso`;
+        const KEY_M = `anual_filtro_${UID}_materia`;
+        const c_local = localStorage.getItem(KEY_C);
+        const m_local = localStorage.getItem(KEY_M);
 
         // 1. Si la URL ya tiene curso, actualizamos el localStorage
         if (u.has('curso')) {
-            localStorage.setItem('anual_filtro_curso', u.get('curso'));
-            localStorage.setItem('anual_filtro_materia', u.get('materia') || '');
+            localStorage.setItem(KEY_C, u.get('curso'));
+            localStorage.setItem(KEY_M, u.get('materia') || '');
             return;
         }
 
@@ -191,7 +195,6 @@
 
     /* ESTILOS DE COLUMNAS */
     .col-prom-t { font-weight: 600; color: #be185d; background: #fff1f2 !important; }
-    .col-examen { background: #fffbeb !important; }
     .col-final-mat { font-weight: 600; color: #1e40af; background: #eff6ff !important; border-right: 2px solid #bfdbfe !important; }
 
     .final-overall {
@@ -310,11 +313,11 @@
                     <div id="dropdownExport" class="dropdown-menu">
                         <a href="{% url 'exportar_boletines_excel' %}?curso={{ curso_sel_id }}" class="dropdown-item">
                             <i class="fa-solid fa-address-book" style="color: #6366f1;"></i>
-                            Generar Boletines Individuales
+                            Boletines Individuales
                         </a>
                         <a href="{% url 'exportar_anual_excel' %}?curso={{ curso_sel_id }}" class="dropdown-item">
                             <i class="fa-solid fa-table" style="color: #10b981;"></i>
-                            Exportar Cuadro Final
+                            Cuadro Final
                         </a>
                     </div>
                 </div>
@@ -336,7 +339,7 @@
                     
                     {% if materia_sel %}
                         <th colspan="3" class="materia-head">PROMEDIOS TRIMESTRALES</th>
-                        <th colspan="3" class="main-head">CALIFICACIÓN FINAL DE MATERIA</th>
+                        <th class="main-head">PROMEDIO FINAL</th>
                     {% else %}
                         {% for mat in subjects_list %}
                         <th class="materia-head" style="width: 120px; font-size: 0.85rem !important; padding: 0.75rem !important;">{{ mat.nombre|truncatechars:15|upper }}</th>
@@ -352,8 +355,6 @@
                         <th style="width: 140px;">1ER TRIMESTRE</th>
                         <th style="width: 140px;">2DO TRIMESTRE</th>
                         <th style="width: 140px;">3ER TRIMESTRE</th>
-                        <th style="width: 160px;" class="col-prom-t">PROM. TRIM.</th>
-                        <th style="width: 160px;" class="col-examen">EXAMEN FINAL</th>
                         <th style="width: 160px;" class="col-final-mat">NOTA FINAL</th>
                     {% else %}
                         {% for mat in subjects_list %}
@@ -369,24 +370,16 @@
                     
                     {% if materia_sel %}
                         {% with m_data=fila.materias.0 %}
-                        <td>{{ m_data.t1|floatformat:2 }}</td>
-                        <td>{{ m_data.t2|floatformat:2 }}</td>
-                        <td>{{ m_data.t3|floatformat:2 }}</td>
-                        <td class="col-prom-t" id="prom-t-{{ fila.matricula.pk }}-{{ m_data.subject.pk }}">{{ m_data.prom_t|floatformat:2 }}</td>
-                        <td class="col-examen">
-                            <input type="number" 
-                                class="input-grade" 
-                                value="{{ m_data.examen|default:'' }}"
-                                step="0.01" min="0" max="10"
-                                onchange="guardarExamenMateria(this, {{ fila.matricula.pk }}, {{ m_data.subject.pk }})">
-                        </td>
-                        <td class="col-final-mat" id="final-mat-{{ fila.matricula.pk }}-{{ m_data.subject.pk }}">
-                            {{ m_data.prom_final|floatformat:2 }}
+                        <td>{{ m_data.t1|trunc2 }}</td>
+                        <td>{{ m_data.t2|trunc2 }}</td>
+                        <td>{{ m_data.t3|trunc2 }}</td>
+                        <td class="col-final-mat">
+                            {{ m_data.prom_final|trunc2 }}
                         </td>
                         {% endwith %}
                     {% else %}
                         {% for m_data in fila.materias %}
-                        <td style="font-weight: 700; color: #1e40af; background: #f8fafc; font-size: 1.1rem;">{{ m_data.prom_final|floatformat:2 }}</td>
+                        <td style="font-weight: 700; color: #1e40af; background: #f8fafc; font-size: 1.1rem;">{{ m_data.prom_final|trunc2 }}</td>
                         {% endfor %}
                     {% endif %}
                     
@@ -401,10 +394,10 @@
                     </td>
                     
                     <td id="total-fila-{{ fila.matricula.pk }}" style="font-weight: 700; color: #475569;">
-                        {{ fila.total_general|floatformat:2 }}
+                        {{ fila.total_general|trunc2 }}
                     </td>
                     <td class="final-overall" id="prom-fila-{{ fila.matricula.pk }}">
-                        {{ fila.promedio_general|floatformat:2 }}
+                        {{ fila.promedio_general|trunc2 }}
                     </td>
                 </tr>
                 {% endfor %}
@@ -439,57 +432,7 @@ window.addEventListener('click', function(e) {
     }
 });
 
-function guardarExamenMateria(input, matriculaId, subjectId) {
-    let valor = parseFloat(input.value);
-    if (isNaN(valor)) valor = 0;
-    if (valor > 10) valor = 10;
-    if (valor < 0) valor = 0;
-    input.value = valor.toFixed(2);
-    
-    fetch("{% url 'guardar_nota' %}", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-CSRFToken": "{{ csrf_token }}" },
-        body: JSON.stringify({
-            matricula_id: matriculaId,
-            materia_id: subjectId,
-            through_id: 0, 
-            trimestre: 4, 
-            valor: valor
-        })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.ok) {
-            input.classList.add('saved');
-            setTimeout(() => input.classList.remove('saved'), 800);
-            
-            // Actualizar Totales de la Fila (Backend returns these now)
-            if (data.total_anual !== undefined) {
-                const tel = document.getElementById(`total-fila-${matriculaId}`);
-                if (tel) tel.textContent = data.total_anual.toFixed(2);
-            }
-            if (data.promedio_anual !== undefined) {
-                const pel = document.getElementById(`prom-fila-${matriculaId}`);
-                if (pel) pel.textContent = data.promedio_anual.toFixed(2);
-            }
-            
-            recalcularMateriaYFila(matriculaId, subjectId, valor);
-        }
-    });
-}
-
-function recalcularMateriaYFila(matriculaId, subjectId, examVal) {
-    const promTEl = document.getElementById(`prom-t-${matriculaId}-${subjectId}`);
-    const finalMatEl = document.getElementById(`final-mat-${matriculaId}-${subjectId}`);
-    
-    if (!promTEl || !finalMatEl) return;
-    
-    const promT = parseFloat(promTEl.textContent) || 0;
-    let finalMat = promT;
-    if (examVal > 0) finalMat = (promT + examVal) / 2;
-    
-    finalMatEl.textContent = finalMat.toFixed(2);
-}
+// (Exam final removed - final grade is the average of the 3 trimesters)
 
 function guardarComportamientoFinal(select, matriculaId) {
     fetch("{% url 'guardar_comportamiento' %}", {
@@ -507,6 +450,7 @@ function guardarComportamientoFinal(select, matriculaId) {
 }
 
     // ---- PERSISTENCIA DE FILTROS ----
+    const ANUAL_UID = '{{ request.user.pk }}';
     function actualizarFiltrosAnual(tipo, valor) {
         let curso = "{{ curso_sel_id }}";
         let materia = "{{ materia_sel_id }}";
@@ -519,8 +463,8 @@ function guardarComportamientoFinal(select, matriculaId) {
         }
 
         if (curso) {
-            localStorage.setItem('anual_filtro_curso', curso);
-            localStorage.setItem('anual_filtro_materia', materia);
+            localStorage.setItem(`anual_filtro_${ANUAL_UID}_curso`, curso);
+            localStorage.setItem(`anual_filtro_${ANUAL_UID}_materia`, materia);
             location.href = `?curso=${curso}&materia=${materia}`;
         } else {
             location.href = '?';
