@@ -4,16 +4,14 @@ from django.db import migrations, models
 def migrate_m2m_data(apps, schema_editor):
     Curso = apps.get_model('grades', 'Curso')
     CursoActividad = apps.get_model('grades', 'CursoActividad')
-    
-    # Intentamos leer de la tabla generada por Django automáticamene antes del cambio
-    # Nota: Si el usuario ya falló la migración, la tabla actividades_legacy aún no existe pero la original sí.
-    # Usaremos SQL crudo para evitar problemas con modelos que no reflejan el estado actual de la DB.
     db_alias = schema_editor.connection.alias
-    from django.db import connections
-    with connections[db_alias].cursor() as cursor:
-        # Verificamos si la tabla de unión original existe
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='grades_curso_actividades'")
-        if cursor.fetchone():
+    
+    # Usamos la introspección de Django que funciona tanto en SQLite como en Postgres
+    table_names = schema_editor.connection.introspection.table_names()
+    
+    if 'grades_curso_actividades' in table_names:
+        from django.db import connections
+        with connections[db_alias].cursor() as cursor:
             cursor.execute("SELECT curso_id, actividad_id FROM grades_curso_actividades")
             rows = cursor.fetchall()
             for i, (curso_id, actividad_id) in enumerate(rows):
