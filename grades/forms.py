@@ -28,7 +28,7 @@ class CursoForm(forms.ModelForm):
         widgets = {
             'periodo': forms.Select(attrs={'class': 'form-input'}),
             'nivel': forms.Select(attrs={'class': 'form-input'}),
-            'subjects': forms.SelectMultiple(attrs={'class': 'form-input', 'size': 8}),
+            'subjects': forms.CheckboxSelectMultiple(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -38,6 +38,24 @@ class CursoForm(forms.ModelForm):
             self.fields['periodo'].queryset = PeriodoLectivo.objects.filter(docente=user)
             self.fields['nivel'].queryset = Nivel.objects.filter(docente=user)
             # subjects remains shared (all Subjects displayed)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        subjects = cleaned_data.get('subjects')
+        
+        if self.instance.pk:
+            current_subjects = set(self.instance.subjects.all())
+            new_subjects = set(subjects) if subjects else set()
+            removed_subjects = current_subjects - new_subjects
+            
+            from .models import CursoActividad
+            for subject in removed_subjects:
+                if CursoActividad.objects.filter(curso=self.instance, subject=subject).exists():
+                    raise forms.ValidationError(
+                        f"No se puede eliminar la materia '{subject.nombre}' porque ya tiene actividades o notas registradas para este curso. "
+                        "Debe eliminar primero las actividades de esta materia en el módulo de registro."
+                    )
+        return cleaned_data
 
 
 class EstudianteForm(forms.ModelForm):

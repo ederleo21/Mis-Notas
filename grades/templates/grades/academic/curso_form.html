@@ -31,13 +31,12 @@
             <!-- Columna Derecha: Materias -->
             <div style="flex: 1; min-width: 250px;">
                 <div class="form-group" style="height: 100%; display: flex; flex-direction: column; margin-bottom: 0;">
-                    <label for="{{ form.subjects.id_for_label }}" style="font-size: 0.85rem; font-weight: 700; color: #475569;">Materias del Curso</label>
-                    <div style="flex-grow: 1;">
+                    <label style="font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 0.75rem;">Materias del Curso</label>
+                    <div class="subjects-list-container">
                         {{ form.subjects }}
                     </div>
-                    <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.5rem;">Mantén presionada la tecla Ctrl (o Cmd en Mac) para seleccionar múltiples materias.</p>
                     {% if form.subjects.errors %}
-                    <div style="color: #b91c1c; font-size: 0.75rem; margin-top: 0.25rem;">{{ form.subjects.errors.0 }}</div>
+                    <div style="color: #b91c1c; font-size: 0.75rem; margin-top: 0.5rem;">{{ form.subjects.errors.0 }}</div>
                     {% endif %}
                 </div>
             </div>

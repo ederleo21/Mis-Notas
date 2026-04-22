@@ -462,7 +462,6 @@
                         class="grade-input {% if n.valor != '' %}saved{% endif %}"
                         value="{{ n.valor|unlocalize }}"
                         inputmode="decimal"
-                        placeholder="0.00"
                         data-matricula="{{ fila.matricula.pk|unlocalize }}"
                         data-actividad="{{ n.actividad_id|unlocalize }}"
                         data-through="{{ n.through_id|unlocalize }}"

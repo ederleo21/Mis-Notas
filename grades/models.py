@@ -92,36 +92,62 @@ class Matricula(models.Model):
 
     def get_subject_final(self, subject):
         """Calcula la nota final de una materia: promedio de los 3 trimestres (truncado)."""
-        t1 = self.get_subject_average(subject, 1)
-        t2 = self.get_subject_average(subject, 2)
-        t3 = self.get_subject_average(subject, 3)
-        return _trunc2((t1 + t2 + t3) / 3)
+        # Solo promediamos trimestres donde la materia realmente tuvo actividad
+        from .models import CursoActividad
+        trimestres_activos = []
+        for t in [1, 2, 3]:
+            if CursoActividad.objects.filter(curso=self.curso, subject=subject, trimestre=t).exists():
+                trimestres_activos.append(self.get_subject_average(subject, t))
+        
+        if not trimestres_activos:
+            return 0.0
+        return _trunc2(sum(trimestres_activos) / len(trimestres_activos))
 
     def get_anual_total(self):
-        """Suma de los promedios finales de cada materia del curso (truncado)."""
-        subjects = self.curso.subjects.all()
+        """Suma de los promedios finales de cada materia activa (que tenga al menos una actividad en el año)."""
+        from .models import CursoActividad
+        active_subject_ids = CursoActividad.objects.filter(
+            curso=self.curso
+        ).values_list('subject_id', flat=True).distinct()
+        
+        subjects = self.curso.subjects.filter(id__in=active_subject_ids)
         total = 0
         for s in subjects:
             total += self.get_subject_final(s)
         return _trunc2(total)
 
     def get_anual_average(self):
-        """Promedio anual general del estudiante (truncado)."""
-        subjects_count = self.curso.subjects.count()
-        if subjects_count > 0:
-            return _trunc2(self.get_anual_total() / subjects_count)
+        """Promedio anual general basado solo en materias con actividades (truncado)."""
+        from .models import CursoActividad
+        active_subjects_count = CursoActividad.objects.filter(
+            curso=self.curso
+        ).values_list('subject_id', flat=True).distinct().count()
+        
+        if active_subjects_count > 0:
+            return _trunc2(self.get_anual_total() / active_subjects_count)
         return 0.0
 
     def get_trimestre_total(self, trimestre):
-        """Suma de promedios de todas las materias asignadas al curso en un trimestre (truncado)."""
-        subjects = self.curso.subjects.all()
+        """Suma de promedios de materias que tienen actividades en este trimestre (truncado)."""
+        from .models import CursoActividad
+        active_subject_ids = CursoActividad.objects.filter(
+            curso=self.curso,
+            trimestre=trimestre
+        ).values_list('subject_id', flat=True).distinct()
+        
+        subjects = self.curso.subjects.filter(id__in=active_subject_ids)
         return _trunc2(sum(self.get_subject_average(s, trimestre) for s in subjects))
 
     def get_trimestre_average(self, trimestre):
-        """Promedio general del trimestre (truncado)."""
-        subjects_count = self.curso.subjects.count()
-        if subjects_count > 0:
-            return _trunc2(self.get_trimestre_total(trimestre) / subjects_count)
+        """Promedio general del trimestre basado solo en materias activas (truncado)."""
+        from .models import CursoActividad
+        active_subjects_count = CursoActividad.objects.filter(
+            curso=self.curso, 
+            trimestre=trimestre
+        ).values_list('subject_id', flat=True).distinct().count()
+        
+        if active_subjects_count > 0:
+            return _trunc2(self.get_trimestre_total(trimestre) / active_subjects_count)
         return 0.0
 
     class Meta:
