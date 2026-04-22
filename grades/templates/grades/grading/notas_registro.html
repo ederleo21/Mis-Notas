@@ -457,16 +457,16 @@
                 </td>
                 {% for n in fila.notas %}
                 <td>
-                    <input type="number" 
+                    <input type="text" 
                         id="nota-{{ fila.matricula.pk|unlocalize }}-{{ n.actividad_id|unlocalize }}"
                         class="grade-input {% if n.valor != '' %}saved{% endif %}"
                         value="{{ n.valor|unlocalize }}"
-                        step="0.01" min="0" max="10"
+                        inputmode="decimal"
+                        placeholder="0.00"
                         data-matricula="{{ fila.matricula.pk|unlocalize }}"
                         data-actividad="{{ n.actividad_id|unlocalize }}"
                         data-through="{{ n.through_id|unlocalize }}"
-                        onchange="guardarNota(this)"
-                        oninput="this.value = this.value.replace(',', '.')">
+                        onchange="guardarNota(this)">
                 </td>
                 {% endfor %}
                 <td class="avg-cell" id="avg-{{ fila.matricula.pk }}">{{ fila.promedio|trunc2 }}</td>
@@ -798,9 +798,17 @@
 
     // ---- GESTIÓN DE NOTAS ----
     function guardarNota(input) {
-        const val = parseFloat(input.value);
+        // Normalización: Convertir comas a puntos antes de procesar
+        let valStr = input.value.replace(',', '.');
+        const val = parseFloat(valStr);
         
-        // Si la nota es inválida, quitamos el verde y ponemos el rojo
+        // Si el campo está vacío, guardamos como 0 o según lo defina el backend
+        if (valStr.trim() === "") {
+            input.classList.remove('saved', 'invalid');
+            // Opcional: podemos enviar 0 o dejar que el backend decida
+        }
+
+        // Si la nota es inválida
         if(isNaN(val) || val < 0 || val > 10) { 
             input.classList.remove('saved');
             input.classList.add('invalid'); 
@@ -977,6 +985,7 @@
         e.stopPropagation();
         document.getElementById('excelDropdownContent').classList.toggle('show');
     }
+
     window.onclick = function(event) {
         if (!event.target.closest('.dropdown')) {
             const content = document.getElementById('excelDropdownContent');
@@ -985,21 +994,6 @@
             }
         }
     }
-
-    // ---- FLEXIBILIDAD DE ENTRADA (Manejo de Comas) ----
-    // Escuchamos el evento keydown para interceptar la coma y poner un punto
-    document.addEventListener('keydown', (e) => {
-        if (e.target.classList.contains('grade-input')) {
-            if (e.key === ',') {
-                e.preventDefault();
-                const start = e.target.selectionStart;
-                const end = e.target.selectionEnd;
-                const val = e.target.value;
-                e.target.value = val.slice(0, start) + '.' + val.slice(end);
-                e.target.selectionStart = e.target.selectionEnd = start + 1;
-            }
-        }
-    });
 
     // Aseguramos que al cargar, si hay valores, se marquen como guardados
     window.addEventListener('load', () => {
