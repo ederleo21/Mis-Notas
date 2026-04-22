@@ -55,7 +55,6 @@ class RegistroNotasView(LoginRequiredMixin, TemplateView):
             for mat in matriculas:
                 fila = {'matricula': mat, 'notas': [], 'promedio': 0}
                 total = 0
-                count = 0
                 for ca in curso_actividades:
                     nota_obj = Nota.objects.filter(
                         matricula=mat, 
@@ -72,8 +71,9 @@ class RegistroNotasView(LoginRequiredMixin, TemplateView):
                     })
                     if nota_obj:
                         total += float(nota_obj.valor)
-                        count += 1
-                fila['promedio'] = _trunc2(total / count) if count > 0 else ''
+                
+                num_insumos = len(curso_actividades)
+                fila['promedio'] = _trunc2(total / num_insumos) if num_insumos > 0 else 0
                 fila['comportamiento_trim'] = Comportamiento.objects.filter(matricula=mat, trimestre=trimestre).first()
                 fila['total_trim'] = mat.get_trimestre_total(trimestre)
                 fila['promedio_trim'] = mat.get_trimestre_average(trimestre)

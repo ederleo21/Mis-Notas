@@ -661,7 +661,8 @@
 
     // Utility: truncate to 2 decimals WITHOUT rounding
     function trunc2(val) {
-        return (Math.trunc(val * 100) / 100).toFixed(2);
+        // Añadimos un micro-épsilon para asegurar que 8.529999... sea 8.53 antes de truncar
+        return (Math.trunc((Number(val) + 0.0000001) * 100) / 100).toFixed(2);
     }
 
     // ---- PERSISTENCIA DE FILTROS (LOCALSTORAGE) ----

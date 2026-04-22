@@ -6,8 +6,9 @@ import math
 User = get_user_model()
 
 def _trunc2(val):
-    """Trunca a 2 decimales SIN redondear."""
-    return math.trunc(float(val) * 100) / 100
+    """Trunca a 2 decimales SIN redondear, con seguridad de punto flotante."""
+    # Redondeamos a 8 decimales antes de truncar para limpiar el ruido del float
+    return math.trunc(round(float(val), 8) * 100) / 100
 
 TRIMESTRE_CHOICES = [
     (1, 'Primer Trimestre'),
