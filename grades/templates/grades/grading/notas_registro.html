@@ -533,7 +533,7 @@
 
         <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
             <button class="btn-sm-outline" onclick="cerrarModal()" style="height: 46px; border: 1px solid #e2e8f0; padding: 0 1.5rem; border-radius: 12px; font-weight: 700; background: white; color: #475569; cursor: pointer; font-family: 'Poppins', sans-serif !important;">Cancelar</button>
-            <button class="btn-sm-success" onclick="guardarTodosAlumnos()" 
+            <button id="btnGuardarAlumnos" class="btn-sm-success" onclick="guardarTodosAlumnos()" 
                     style="background: #10b981; color: white; height: 46px; padding: 0 1.75rem; border-radius: 12px; border: none; font-weight: 800; font-family: 'Poppins', sans-serif !important; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); transition: all 0.3s;"
                     onmouseover="this.style.background='#059669'; this.style.transform='translateY(-2px)'"
                     onmouseout="this.style.background='#10b981'; this.style.transform='translateY(0)'">Guardar Todo</button>
@@ -567,7 +567,7 @@
 
         <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem;">
             <button class="btn-sm-outline" onclick="cerrarModalInsumo()" style="height: 46px; border-width: 1px; padding: 0 1.5rem; border-radius: 12px; font-weight: 700; font-family: 'Poppins', sans-serif !important; border: 1px solid #e2e8f0; color: #475569; background: white; cursor: pointer;">Cancelar</button>
-            <button class="btn-sm-primary" onclick="agregarInsumo()" 
+            <button id="btnConfirmarInsumo" class="btn-sm-primary" onclick="agregarInsumo()" 
                     style="height: 46px; background: #10b981; color: white; padding: 0 1.75rem; border-radius: 12px; border: none; font-weight: 800; font-family: 'Poppins', sans-serif !important; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); transition: all 0.3s;"
                     onmouseover="this.style.background='#059669'; this.style.transform='translateY(-2px)'"
                     onmouseout="this.style.background='#10b981'; this.style.transform='translateY(0)'">Añadir</button>
@@ -601,7 +601,7 @@
 
         <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
             <button class="btn-sm-outline" onclick="cerrarModalInsumosBase()" style="height: 46px; border: 1px solid #e2e8f0; padding: 0 1.5rem; border-radius: 12px; font-weight: 700; background: white; color: #475569; cursor: pointer; font-family: 'Poppins', sans-serif !important;">Cancelar</button>
-            <button class="btn-sm-primary" onclick="aplicarInsumosBase()" 
+            <button id="btnAplicarInsumosBase" class="btn-sm-primary" onclick="aplicarInsumosBase()" 
                     style="height: 46px; background: #10b981; color: white; padding: 0 1.75rem; border-radius: 12px; border: none; font-weight: 800; font-family: 'Poppins', sans-serif !important; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); transition: all 0.3s;"
                     onmouseover="this.style.background='#059669'; this.style.transform='translateY(-2px)'"
                     onmouseout="this.style.background='#10b981'; this.style.transform='translateY(0)'">Aplicar Configuración</button>
@@ -628,7 +628,7 @@
 
         <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem;">
             <button class="btn-sm-outline" onclick="cerrarModalEditar()" style="height: 46px; border: 1px solid #e2e8f0; padding: 0 1.5rem; border-radius: 12px; font-weight: 700; background: white; color: #475569; cursor: pointer;">Cancelar</button>
-            <button class="btn-sm-primary" onclick="confirmarEdicionEstudiante()" 
+            <button id="btnConfirmarEdicion" class="btn-sm-primary" onclick="confirmarEdicionEstudiante()" 
                     style="height: 46px; background: #6366f1; color: white; padding: 0 1.75rem; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2); transition: all 0.3s;"
                     onmouseover="this.style.background='#4f46e5'; this.style.transform='translateY(-2px)'"
                     onmouseout="this.style.background='#6366f1'; this.style.transform='translateY(0)'">Guardar Cambios</button>
@@ -789,10 +789,23 @@
     
     function guardarTodosAlumnos() {
         if(estudiantesNuevos.length === 0) return;
+
+        const btn = document.getElementById('btnGuardarAlumnos');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...';
+
         fetch("{% url 'carga_masiva' %}", {
             method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN},
             body: JSON.stringify({ curso_id: CURSO_ID, estudiantes: estudiantesNuevos })
-        }).then(res => res.json()).then(data => data.ok && location.reload());
+        }).then(res => res.json()).then(data => {
+            if(data.ok) {
+                location.reload();
+            } else {
+                btn.disabled = false;
+                btn.textContent = 'Guardar Todo';
+                showToast(data.error || "Error al guardar estudiantes", "error");
+            }
+        });
     }
 
     // ---- GESTIÓN DE NOTAS ----
@@ -853,10 +866,23 @@
     function agregarInsumo() {
         const actId = document.getElementById('insumoSelectCatalog').value;
         if(!actId) return;
+
+        const btn = document.getElementById('btnConfirmarInsumo');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...';
+
         fetch("{% url 'agregar_insumo' %}", {
             method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN},
             body: JSON.stringify({ curso_id: CURSO_ID, actividad_id: actId, materia_id: MATERIA_ID, trimestre: TRIMESTRE })
-        }).then(res => res.json()).then(data => data.ok && location.reload());
+        }).then(res => res.json()).then(data => {
+            if(data.ok) {
+                location.reload();
+            } else {
+                btn.disabled = false;
+                btn.textContent = 'Añadir';
+                showToast(data.error || "Error al añadir insumo", "error");
+            }
+        });
     }
     
     function eliminarInsumo(caId) { 
@@ -918,6 +944,10 @@
             return;
         }
 
+        const btn = document.getElementById('btnConfirmarEdicion');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...';
+
         fetch("{% url 'editar_estudiante' %}", {
             method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN},
             body: JSON.stringify({ matricula_id: matId, apellidos: ap, nombres: nom })
@@ -926,6 +956,8 @@
                 showToast("Estudiante actualizado correctamente");
                 location.reload();
             } else {
+                btn.disabled = false;
+                btn.textContent = 'Guardar Cambios';
                 showToast(data.error || "Error al actualizar estudiante", "error");
             }
         });
@@ -965,6 +997,10 @@
             showToast('Selecciona al menos una actividad.', 'warning'); 
             return; 
         }
+
+        const btn = document.getElementById('btnAplicarInsumosBase');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...';
         
         fetch("{% url 'asignar_insumos_base' %}", {
             method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN},
@@ -974,6 +1010,8 @@
                 showToast(`Se han asignado ${data.assigned} actividades base.`);
                 setTimeout(() => location.reload(), 1000);
             } else {
+                btn.disabled = false;
+                btn.textContent = 'Aplicar Configuración';
                 showToast(data.error || "Error al asignar insumos base", "error");
             }
         });
