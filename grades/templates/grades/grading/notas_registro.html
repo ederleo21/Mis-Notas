@@ -696,7 +696,7 @@
         }
     }
 
-    async function cargarMaterias(cursoId) {
+    async function cargarMaterias(cursoId, autoSelectFromURL = false) {
         if (!cursoId) {
             materiaSelect.innerHTML = '<option value="">-- Seleccionar --</option>';
             return;
@@ -719,9 +719,13 @@
                 });
                 materiaSelect.innerHTML = options;
 
-                const uParams = new URLSearchParams(window.location.search);
-                if (uParams.has('materia')) {
-                    materiaSelect.value = uParams.get('materia');
+                // Solo auto-seleccionar la materia de la URL en la carga inicial,
+                // NO cuando el usuario cambia de curso manualmente
+                if (autoSelectFromURL) {
+                    const uParams = new URLSearchParams(window.location.search);
+                    if (uParams.has('materia')) {
+                        materiaSelect.value = uParams.get('materia');
+                    }
                 }
             }
         } catch (err) {
@@ -736,8 +740,7 @@
     if (cursoSelect) {
         cursoSelect.addEventListener('change', (e) => {
             materiaSelect.value = ""; // Reset materia al cambiar curso
-            cargarMaterias(e.target.value);
-            evaluarEnvioFiltros();
+            cargarMaterias(e.target.value, false); // NO auto-seleccionar materia vieja
         });
     }
 
