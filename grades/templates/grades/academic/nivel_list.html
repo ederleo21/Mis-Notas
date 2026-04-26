@@ -3,12 +3,14 @@
 {% block title %}Niveles | Sistema Académico{% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-    <div>
-        <h2 style="font-size: 1.875rem; font-weight: 700;">Grados y Paralelos</h2>
-        <p style="color: var(--text-muted);">Define los niveles académicos (ej: 3ero B).</p>
+<div class="list-header">
+    <div class="list-header-info">
+        <h2>Grados y Paralelos</h2>
+        <p>Niveles académicos configurados (ej: 3ero B).</p>
     </div>
-    <a href="{% url 'nivel_create' %}" class="btn btn-primary">+ Nuevo Nivel</a>
+    <a href="{% url 'nivel_create' %}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+        <i class="fa-solid fa-plus" style="margin-right: 6px;"></i> Nuevo Nivel
+    </a>
 </div>
 
 <div class="table-container">
