@@ -44,24 +44,73 @@ class RegistroNotasView(LoginRequiredMixin, TemplateView):
             materia = Subject.objects.get(pk=materia_id)
             trimestre = int(trimestre_val)
 
-            matriculas = Matricula.objects.filter(curso=curso).select_related('estudiante').order_by('estudiante__apellidos', 'estudiante__nombres')
-            curso_actividades = CursoActividad.objects.filter(
+            matriculas = list(Matricula.objects.filter(curso=curso).select_related('estudiante').order_by('estudiante__apellidos', 'estudiante__nombres'))
+            curso_actividades = list(CursoActividad.objects.filter(
                 curso=curso, 
                 trimestre=trimestre, 
                 subject=materia
-            ).select_related('actividad').order_by('orden', 'pk')
+            ).select_related('actividad').order_by('orden', 'pk'))
 
+            # ── BULK PREFETCH: 1 query para TODAS las notas de este trimestre/materia ──
+            mat_ids = [m.pk for m in matriculas]
+            ca_ids = [ca.pk for ca in curso_actividades]
+            
+            all_notas = Nota.objects.filter(
+                matricula_id__in=mat_ids,
+                curso_actividad_id__in=ca_ids,
+                subject=materia,
+                trimestre=trimestre
+            ).select_related('curso_actividad')
+            
+            # Diccionario: (matricula_id, curso_actividad_id) → nota
+            notas_map = {}
+            for n in all_notas:
+                notas_map[(n.matricula_id, n.curso_actividad_id)] = n
+
+            # ── BULK PREFETCH: 1 query para TODOS los comportamientos ──
+            all_comps = Comportamiento.objects.filter(
+                matricula_id__in=mat_ids,
+                trimestre=trimestre
+            )
+            comps_map = {c.matricula_id: c for c in all_comps}
+
+            # ── BULK PREFETCH: datos para total/promedio trimestral ──
+            # Obtener TODAS las actividades del trimestre (todas las materias)
+            all_ca_trim = list(CursoActividad.objects.filter(
+                curso=curso,
+                trimestre=trimestre
+            ).select_related('actividad'))
+            
+            # Materias activas en este trimestre
+            active_subject_ids_trim = list(set(ca.subject_id for ca in all_ca_trim if ca.subject_id))
+            
+            # TODAS las notas del trimestre (todas las materias) para los alumnos
+            all_ca_trim_ids = [ca.pk for ca in all_ca_trim]
+            all_notas_trim = Nota.objects.filter(
+                matricula_id__in=mat_ids,
+                curso_actividad_id__in=all_ca_trim_ids
+            )
+            
+            # Diccionario: (matricula_id, subject_id) → [notas]
+            notas_por_materia = {}
+            for n in all_notas_trim:
+                key = (n.matricula_id, n.subject_id)
+                notas_por_materia.setdefault(key, []).append(float(n.valor))
+            
+            # Insumos por materia: subject_id → count de CursoActividades
+            insumos_por_materia = {}
+            for ca in all_ca_trim:
+                if ca.subject_id:
+                    insumos_por_materia[ca.subject_id] = insumos_por_materia.get(ca.subject_id, 0) + 1
+
+            # ── CONSTRUIR TABLA (sin queries adicionales) ──
+            num_insumos = len(curso_actividades)
             tabla = []
             for mat in matriculas:
                 fila = {'matricula': mat, 'notas': [], 'promedio': 0}
                 total = 0
                 for ca in curso_actividades:
-                    nota_obj = Nota.objects.filter(
-                        matricula=mat, 
-                        curso_actividad=ca,
-                        subject=materia,
-                        trimestre=trimestre
-                    ).first()
+                    nota_obj = notas_map.get((mat.pk, ca.pk))
                     valor = float(nota_obj.valor) if nota_obj else ''
                     fila['notas'].append({
                         'actividad_id': ca.actividad.pk,
@@ -72,11 +121,21 @@ class RegistroNotasView(LoginRequiredMixin, TemplateView):
                     if nota_obj:
                         total += float(nota_obj.valor)
                 
-                num_insumos = len(curso_actividades)
                 fila['promedio'] = _trunc2(total / num_insumos) if num_insumos > 0 else 0
-                fila['comportamiento_trim'] = Comportamiento.objects.filter(matricula=mat, trimestre=trimestre).first()
-                fila['total_trim'] = mat.get_trimestre_total(trimestre)
-                fila['promedio_trim'] = mat.get_trimestre_average(trimestre)
+                fila['comportamiento_trim'] = comps_map.get(mat.pk)
+                
+                # Calcular total y promedio trimestral en Python (sin queries)
+                trim_total = 0
+                for sid in active_subject_ids_trim:
+                    count = insumos_por_materia.get(sid, 0)
+                    if count > 0:
+                        suma = sum(notas_por_materia.get((mat.pk, sid), []))
+                        trim_total += _trunc2(suma / count)
+                fila['total_trim'] = _trunc2(trim_total)
+                
+                n_active = len(active_subject_ids_trim)
+                fila['promedio_trim'] = _trunc2(trim_total / n_active) if n_active > 0 else 0
+                
                 tabla.append(fila)
 
             context['tabla'] = tabla
