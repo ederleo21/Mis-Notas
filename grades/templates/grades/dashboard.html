@@ -4,110 +4,109 @@
 
 {% block extra_css %}
 <style>
-    /* ---- ANIMATED BACKGROUND ---- */
+    /* ---- FONDO ESTILO LOGIN (DOTS + BLOBS + DECALS) ---- */
     .content-area {
         position: relative;
         overflow: hidden;
-    }
-    .content-area::before {
-        content: "";
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: 
-            radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
-            radial-gradient(ellipse at 80% 20%, rgba(249, 115, 22, 0.05) 0%, transparent 50%),
-            radial-gradient(ellipse at 50% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
-        pointer-events: none;
-        z-index: 0;
+        background-image: radial-gradient(#e2e8f0 1.2px, transparent 1.2px);
+        background-size: 40px 40px;
     }
 
+    /* Blobs con blur */
+    .bg-blob {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(60px);
+        z-index: 0;
+        opacity: 0.45;
+        animation: moveBlobs 25s infinite alternate ease-in-out;
+        will-change: transform;
+        pointer-events: none;
+    }
+    .bg-blob-1 { width: 500px; height: 500px; background: rgba(79, 70, 229, 0.15); top: -15%; left: -10%; }
+    .bg-blob-2 { width: 400px; height: 400px; background: rgba(249, 115, 22, 0.12); bottom: -5%; right: -5%; animation-delay: -5s; }
+    .bg-blob-3 { width: 300px; height: 300px; background: rgba(16, 185, 129, 0.10); top: 35%; right: 10%; animation-delay: -10s; }
+
+    @keyframes moveBlobs {
+        0% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(40px, 60px) scale(1.15); }
+        100% { transform: translate(-20px, 30px) scale(0.9); }
+    }
+
+    /* Decals Académicos Flotantes */
+    .bg-decal {
+        position: fixed;
+        color: #4f46e5;
+        opacity: 0.08;
+        z-index: 0;
+        user-select: none;
+        pointer-events: none;
+        animation: floatDecal 12s infinite ease-in-out;
+        will-change: transform;
+    }
+    .bg-decal-1 { top: 8%; left: 5%; font-size: 5.5rem; animation-delay: 0s; }
+    .bg-decal-2 { top: 65%; left: 8%; font-size: 4.5rem; animation-delay: -3s; }
+    .bg-decal-3 { top: 12%; right: 6%; font-size: 5rem; animation-delay: -6s; }
+    .bg-decal-4 { top: 72%; right: 12%; font-size: 4rem; animation-delay: -9s; }
+    .bg-decal-5 { top: 40%; left: 50%; font-size: 6rem; opacity: 0.04; animation-duration: 18s; }
+    .bg-decal-6 { top: 25%; left: 30%; font-size: 3.5rem; animation-delay: -2s; }
+    .bg-decal-7 { top: 85%; left: 45%; font-size: 4rem; animation-delay: -7s; }
+    .bg-decal-8 { top: 50%; right: 4%; font-size: 3.5rem; animation-delay: -4s; opacity: 0.06; }
+
+    @keyframes floatDecal {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-30px) rotate(10deg); }
+    }
+
+    /* Light Streaks */
+    .bg-streak {
+        position: fixed;
+        width: 1px;
+        height: 100vh;
+        background: linear-gradient(to bottom, transparent, rgba(79, 70, 229, 0.08), transparent);
+        transform: rotate(35deg);
+        z-index: 0;
+        pointer-events: none;
+        animation: streakMove 8s infinite linear;
+    }
+    .bg-streak-1 { left: 25%; animation-delay: 0s; }
+    .bg-streak-2 { left: 65%; animation-delay: 4s; }
+
+    @keyframes streakMove {
+        from { transform: translateY(-100vh) rotate(35deg); }
+        to { transform: translateY(100vh) rotate(35deg); }
+    }
+
+    /* ---- CONTENIDO (Z-INDEX ENCIMA DEL FONDO) ---- */
     .dash-container {
         position: relative;
         z-index: 1;
     }
 
-    /* ---- FLOATING ORBS ---- */
-    .dash-orb {
-        position: fixed;
-        border-radius: 50%;
-        filter: blur(60px);
-        opacity: 0.35;
-        pointer-events: none;
-        z-index: 0;
-    }
-    .dash-orb-1 {
-        width: 300px; height: 300px;
-        background: linear-gradient(135deg, #818cf8, #6366f1);
-        top: -50px; right: -80px;
-        animation: orbFloat1 12s ease-in-out infinite;
-    }
-    .dash-orb-2 {
-        width: 250px; height: 250px;
-        background: linear-gradient(135deg, #fb923c, #f97316);
-        bottom: 10%; left: -60px;
-        animation: orbFloat2 15s ease-in-out infinite;
-    }
-    .dash-orb-3 {
-        width: 200px; height: 200px;
-        background: linear-gradient(135deg, #34d399, #10b981);
-        bottom: -30px; right: 25%;
-        animation: orbFloat3 10s ease-in-out infinite;
-    }
-
-    @keyframes orbFloat1 {
-        0%, 100% { transform: translate(0, 0) scale(1); }
-        50% { transform: translate(-40px, 30px) scale(1.1); }
-    }
-    @keyframes orbFloat2 {
-        0%, 100% { transform: translate(0, 0) scale(1); }
-        50% { transform: translate(30px, -25px) scale(1.05); }
-    }
-    @keyframes orbFloat3 {
-        0%, 100% { transform: translate(0, 0) scale(1); }
-        50% { transform: translate(-20px, -30px) scale(1.12); }
-    }
-
-    /* ---- HEADER & WELCOME ---- */
+    /* ---- HEADER & DASHBOARD AREA ---- */
     .dash-header {
-        margin-bottom: 36px;
+        margin-bottom: 40px;
         display: flex;
         flex-direction: column;
         align-items: center;
         text-align: center;
-        animation: fadeSlideUp 0.6s ease-out;
-    }
-    .dash-greeting {
-        font-size: 0.8rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        color: #6366f1;
-        margin-bottom: 6px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
     }
     .dash-header h2 {
-        font-size: 1.6rem;
-        font-weight: 800;
-        letter-spacing: -0.03em;
-        color: #0f172a;
-        margin-bottom: 6px;
-        background: linear-gradient(135deg, #1e293b, #4f46e5);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        font-size: 1.35rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #1e293b;
     }
     .dash-header p {
         color: #64748b;
-        font-weight: 500;
-        font-size: 0.95rem;
+        font-weight: 600;
+        font-size: 1rem;
     }
     .dash-date {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        margin-top: 10px;
+        margin-top: 12px;
         background: white;
         border: 1px solid #e2e8f0;
         padding: 0.35rem 0.85rem;
@@ -119,74 +118,59 @@
     }
     .dash-date i { color: #6366f1; }
 
-    /* ---- TOP STATS (GLASSMORPHISM) ---- */
+    /* ---- TOP STATS (COMPACT) ---- */
     .top-stats {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-        margin-bottom: 32px;
+        gap: 15px;
+        margin-bottom: 30px;
     }
     .stat-pill {
-        background: rgba(255, 255, 255, 0.75);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.8);
-        border-radius: 1.15rem;
-        padding: 18px 22px;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 1rem;
+        padding: 15px 20px;
         display: flex;
         align-items: center;
-        gap: 16px;
-        box-shadow: 0 8px 24px -4px rgba(0,0,0,0.06);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        animation: fadeSlideUp 0.6s ease-out backwards;
-    }
-    .stat-pill:nth-child(1) { animation-delay: 0.1s; }
-    .stat-pill:nth-child(2) { animation-delay: 0.2s; }
-    .stat-pill:nth-child(3) { animation-delay: 0.3s; }
-    
-    .stat-pill:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 28px -4px rgba(0,0,0,0.1);
+        gap: 15px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
     }
     .stat-pill-icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: #f1f5f9;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.3rem;
-        flex-shrink: 0;
+        font-size: 1.25rem;
     }
     .stat-pill-info .s-val {
-        font-size: 1.4rem;
+        font-size: 1.25rem;
         font-weight: 900;
-        color: #0f172a;
+        color: #1e293b;
         display: block;
         line-height: 1;
     }
     .stat-pill-info .s-lab {
-        font-size: 0.72rem;
+        font-size: 0.75rem;
         color: #94a3b8;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.06em;
-        margin-top: 2px;
+        letter-spacing: 0.05em;
     }
 
-    /* ---- MAIN MODULES (CARDS) ---- */
+    /* ---- MAIN MODULES (CENTERPIECE) ---- */
     .main-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 22px;
+        gap: 20px;
     }
     .action-card {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.9);
+        background: white;
+        border: 1px solid #e2e8f0;
         border-radius: 1.5rem;
-        padding: 40px 30px 32px;
+        padding: 40px 30px;
         text-decoration: none;
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         text-align: center;
@@ -195,82 +179,55 @@
         align-items: center;
         position: relative;
         overflow: hidden;
-        box-shadow: 0 10px 30px -5px rgba(0,0,0,0.06);
-        animation: fadeSlideUp 0.6s ease-out backwards;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.03);
     }
-    .action-card:nth-child(1) { animation-delay: 0.15s; }
-    .action-card:nth-child(2) { animation-delay: 0.25s; }
-    .action-card:nth-child(3) { animation-delay: 0.35s; }
-
     .action-card:hover {
         transform: translateY(-8px);
-        box-shadow: 0 25px 50px -15px rgba(0, 0, 0, 0.12);
-        border-color: var(--mc);
+        box-shadow: 0 25px 40px -15px rgba(0, 0, 0, 0.1);
+        border-color: #818cf8;
     }
     .action-card::before {
         content: "";
         position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 4px;
-        background: linear-gradient(90deg, var(--mc), var(--ml));
-    }
-    /* Decorative glow on hover */
-    .action-card::after {
-        content: "";
-        position: absolute;
-        top: 50%; left: 50%;
-        width: 200px; height: 200px;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
         background: var(--mc);
-        border-radius: 50%;
-        filter: blur(80px);
-        opacity: 0;
-        transform: translate(-50%, -50%);
-        transition: opacity 0.4s;
-        pointer-events: none;
-    }
-    .action-card:hover::after {
-        opacity: 0.06;
     }
 
     .card-icon {
-        width: 76px;
-        height: 76px;
+        width: 80px;
+        height: 80px;
         border-radius: 20px;
         background: var(--mb);
         color: var(--mc);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2.2rem;
-        margin-bottom: 22px;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        z-index: 1;
+        font-size: 2.5rem;
+        margin-bottom: 25px;
+        transition: transform 0.3s;
     }
     .action-card:hover .card-icon {
-        transform: scale(1.12) rotate(5deg);
-        box-shadow: 0 8px 20px -4px var(--mc);
+        transform: scale(1.15) rotate(5deg);
     }
     
     .action-card h3 {
-        font-size: 1.35rem;
+        font-size: 1.5rem;
         font-weight: 800;
-        color: #0f172a;
-        margin-bottom: 10px;
-        position: relative;
-        z-index: 1;
+        color: #1e293b;
+        margin-bottom: 12px;
     }
     .action-card p {
         color: #64748b;
-        font-size: 0.9rem;
-        line-height: 1.65;
-        margin-bottom: 22px;
-        position: relative;
-        z-index: 1;
+        font-size: 0.9375rem;
+        line-height: 1.6;
+        margin-bottom: 25px;
     }
     .btn-enter {
         margin-top: auto;
-        font-size: 0.8rem;
+        font-size: 0.8125rem;
         font-weight: 800;
         color: var(--mc);
         text-transform: uppercase;
@@ -278,51 +235,46 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        position: relative;
-        z-index: 1;
-        transition: gap 0.3s;
-    }
-    .action-card:hover .btn-enter {
-        gap: 14px;
     }
 
-    /* Card color variants */
-    .c-v-1 { --mc: #4f46e5; --ml: #818cf8; --mb: #eef2ff; }
-    .c-v-2 { --mc: #f97316; --ml: #fb923c; --mb: #fff7ed; }
-    .c-v-3 { --mc: #10b981; --ml: #34d399; --mb: #ecfdf5; }
+    /* Modifiers */
+    .c-v-1 { --mc: #4f46e5; --mb: #eef2ff; }
+    .c-v-2 { --mc: #f97316; --mb: #fff7ed; }
+    .c-v-3 { --mc: #10b981; --mb: #ecfdf5; }
 
-    /* ---- ANIMATION ---- */
-    @keyframes fadeSlideUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ---- RESPONSIVE ---- */
     @media (max-width: 1100px) {
         .main-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 768px) {
         .main-grid { grid-template-columns: 1fr; }
         .top-stats { grid-template-columns: 1fr; }
-        .dash-header h2 { font-size: 1.3rem; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Floating background orbs -->
-<div class="dash-orb dash-orb-1"></div>
-<div class="dash-orb dash-orb-2"></div>
-<div class="dash-orb dash-orb-3"></div>
+<!-- Fondo dinámico estilo login -->
+<div class="bg-blob bg-blob-1"></div>
+<div class="bg-blob bg-blob-2"></div>
+<div class="bg-blob bg-blob-3"></div>
+
+<div class="bg-streak bg-streak-1"></div>
+<div class="bg-streak bg-streak-2"></div>
+
+<!-- Decals académicos flotantes -->
+<i class="fa-solid fa-chart-bar bg-decal bg-decal-1"></i>
+<i class="fa-solid fa-clipboard-check bg-decal bg-decal-2"></i>
+<i class="fa-solid fa-ranking-star bg-decal bg-decal-3"></i>
+<i class="fa-solid fa-pen-ruler bg-decal bg-decal-4"></i>
+<i class="fa-solid fa-chalkboard-user bg-decal bg-decal-5"></i>
+<i class="fa-solid fa-spell-check bg-decal bg-decal-6"></i>
+<i class="fa-solid fa-square-root-variable bg-decal bg-decal-7"></i>
+<i class="fa-solid fa-microscope bg-decal bg-decal-8"></i>
 
 <div class="dash-container">
     <div class="dash-header">
-        <div class="dash-greeting">
-            <i class="fa-solid fa-graduation-cap"></i>
-            Panel Académico
-        </div>
-        <h2>¡Hola, {{ user.first_name|default:user.username }}!</h2>
-        <p>Bienvenido a tu sistema de gestión de calificaciones.</p>
+        <h2>👋 ¡Hola! Bienvenido, {{ user.get_full_name|default:user.username }}</h2>
+        <p>Has ingresado al panel de control académico.</p>
         <div class="dash-date">
             <i class="fa-regular fa-calendar"></i>
             <span id="dashDate"></span>
@@ -331,27 +283,21 @@
 
     <div class="top-stats">
         <div class="stat-pill">
-            <div class="stat-pill-icon" style="color: #6366f1; background: #eef2ff;">
-                <i class="fa-solid fa-user-graduate"></i>
-            </div>
+            <div class="stat-pill-icon" style="color: #6366f1; background: #eef2ff;"><i class="fa-solid fa-users"></i></div>
             <div class="stat-pill-info">
                 <span class="s-val">{{ num_estudiantes }}</span>
                 <span class="s-lab">Estudiantes</span>
             </div>
         </div>
         <div class="stat-pill">
-            <div class="stat-pill-icon" style="color: #f59e0b; background: #fffbeb;">
-                <i class="fa-solid fa-school"></i>
-            </div>
+            <div class="stat-pill-icon" style="color: #f59e0b; background: #fffbeb;"><i class="fa-solid fa-school"></i></div>
             <div class="stat-pill-info">
                 <span class="s-val">{{ num_cursos }}</span>
-                <span class="s-lab">Cursos Activos</span>
+                <span class="s-lab">Cursos</span>
             </div>
         </div>
         <div class="stat-pill">
-            <div class="stat-pill-icon" style="color: #10b981; background: #ecfdf5;">
-                <i class="fa-solid fa-book-bookmark"></i>
-            </div>
+            <div class="stat-pill-icon" style="color: #10b981; background: #ecfdf5;"><i class="fa-solid fa-book-bookmark"></i></div>
             <div class="stat-pill-info">
                 <span class="s-val">{{ num_materias }}</span>
                 <span class="s-lab">Materias</span>
@@ -364,21 +310,21 @@
             <div class="card-icon"><i class="fa-solid fa-chart-line"></i></div>
             <h3>Registro de Notas</h3>
             <p>Gestiona calificaciones por materia y trimestre con cálculos en tiempo real.</p>
-            <div class="btn-enter">Ingresar <i class="fa-solid fa-arrow-right"></i></div>
+            <div class="btn-enter">Ingresar <i class="fa-solid fa-arrow-right" style="margin-left: 5px;"></i></div>
         </a>
 
         <a href="{% url 'periodo_list' %}" class="action-card c-v-2">
             <div class="card-icon"><i class="fa-solid fa-sliders"></i></div>
             <h3>Gestión Académica</h3>
             <p>Configura años lectivos, cursos, paralelos y matriculación.</p>
-            <div class="btn-enter">Configurar <i class="fa-solid fa-arrow-right"></i></div>
+            <div class="btn-enter">Configurar <i class="fa-solid fa-arrow-right" style="margin-left: 5px;"></i></div>
         </a>
 
         <a href="{% url 'cuadro_anual' %}" class="action-card c-v-3">
             <div class="card-icon"><i class="fa-solid fa-award"></i></div>
             <h3>Cuadro Final Anual</h3>
             <p>Consolidado anual de los 3 trimestres y promedio final por materia.</p>
-            <div class="btn-enter">Ver Cuadro Anual <i class="fa-solid fa-arrow-right"></i></div>
+            <div class="btn-enter">Ver Cuadro Anual <i class="fa-solid fa-arrow-right" style="margin-left: 5px;"></i></div>
         </a>
     </div>
 </div>
@@ -386,7 +332,6 @@
 
 {% block extra_js %}
 <script>
-    // Show current date in Spanish
     const dateEl = document.getElementById('dashDate');
     if (dateEl) {
         const now = new Date();
