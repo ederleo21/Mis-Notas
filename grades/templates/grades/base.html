@@ -488,37 +488,54 @@
 
         .main-nav {
             display: flex;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 1rem;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2.5rem;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 0.5rem;
+            border-radius: 1.25rem;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            width: fit-content;
         }
 
         .nav-link {
             text-decoration: none;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            transition: color 0.2s;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #64748b;
+            padding: 0.6rem 1.25rem;
+            border-radius: 0.85rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            white-space: nowrap;
+        }
+
+        .nav-link i {
+            font-size: 1rem;
+            transition: transform 0.3s;
         }
 
         .nav-link:hover {
             color: var(--primary);
+            background: rgba(79, 70, 229, 0.05);
+        }
+
+        .nav-link:hover i {
+            transform: translateY(-2px);
         }
 
         .nav-link.active {
-            color: var(--primary);
-            position: relative;
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
         }
 
-        .nav-link.active::after {
-            content: "";
-            position: absolute;
-            bottom: -1rem;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--primary);
+        .nav-link.active i {
+            color: white;
         }
 
         /* Modal styles */
@@ -768,11 +785,21 @@
     <main class="container">
         {% if request.resolver_match.url_name != 'dashboard' and 'notas' not in request.path %}
         <nav class="main-nav">
-            <a href="{% url 'periodo_list' %}" class="nav-link {% if 'periodo' in request.path %}active{% endif %}">Años Lectivos</a>
-            <a href="{% url 'nivel_list' %}" class="nav-link {% if 'nivel' in request.path %}active{% endif %}">Grados</a>
-            <a href="{% url 'curso_list' %}" class="nav-link {% if 'curso' in request.path %}active{% endif %}">Cursos</a>
-            <a href="{% url 'subject_list' %}" class="nav-link {% if 'materia' in request.path %}active{% endif %}">Materias</a>
-            <a href="{% url 'actividad_list' %}" class="nav-link {% if 'actividad' in request.path %}active{% endif %}">Insumos</a>
+            <a href="{% url 'periodo_list' %}" class="nav-link {% if 'periodo' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-calendar-check"></i> Años Lectivos
+            </a>
+            <a href="{% url 'nivel_list' %}" class="nav-link {% if 'nivel' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-layer-group"></i> Grados
+            </a>
+            <a href="{% url 'curso_list' %}" class="nav-link {% if 'curso' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-users-rectangle"></i> Cursos
+            </a>
+            <a href="{% url 'subject_list' %}" class="nav-link {% if 'materia' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-book-bookmark"></i> Materias
+            </a>
+            <a href="{% url 'actividad_list' %}" class="nav-link {% if 'actividad' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-vial-circle-check"></i> Insumos
+            </a>
         </nav>
 
         {% endif %}
