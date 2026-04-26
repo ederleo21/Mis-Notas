@@ -1,7 +1,7 @@
 from django.views.generic import TemplateView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
-from ..models import Curso, Subject, Matricula, Nota, Comportamiento, _trunc2
+from ..models import Curso, Subject, Matricula, Nota, Comportamiento, CursoActividad, _trunc2
 from ..utils.excel_reports import generar_excel_trimestre, generar_excel_anual, generar_excel_boletines_individuales
 import io
 
@@ -20,13 +20,55 @@ class CuadroAnualView(LoginRequiredMixin, TemplateView):
 
         if curso_id:
             curso = Curso.objects.get(pk=curso_id)
-            subjects = curso.subjects.all().order_by('nombre')
-            matriculas = Matricula.objects.filter(curso=curso).select_related('estudiante').order_by('estudiante__apellidos', 'estudiante__nombres')
+            subjects = list(curso.subjects.all().order_by('nombre'))
+            subjects_count = len(subjects)
+            matriculas = list(Matricula.objects.filter(curso=curso).select_related('estudiante').order_by('estudiante__apellidos', 'estudiante__nombres'))
 
             materia_sel = None
             if materia_id:
-                materia_sel = subjects.filter(pk=materia_id).first()
+                materia_sel = next((s for s in subjects if str(s.pk) == str(materia_id)), None)
 
+            # ── BULK PREFETCH: todas las CursoActividades del curso (3 trimestres) ──
+            all_ca = list(CursoActividad.objects.filter(curso=curso))
+            
+            # Insumos por (subject_id, trimestre) → count
+            insumos_count = {}
+            for ca in all_ca:
+                if ca.subject_id:
+                    key = (ca.subject_id, ca.trimestre)
+                    insumos_count[key] = insumos_count.get(key, 0) + 1
+
+            # ── BULK PREFETCH: TODAS las notas del curso (todos trimestres, todas materias) ──
+            mat_ids = [m.pk for m in matriculas]
+            all_ca_ids = [ca.pk for ca in all_ca]
+            
+            all_notas = Nota.objects.filter(
+                matricula_id__in=mat_ids,
+                curso_actividad_id__in=all_ca_ids
+            )
+            
+            # Diccionario: (matricula_id, subject_id, trimestre) → suma de valores
+            notas_sum = {}
+            for n in all_notas:
+                key = (n.matricula_id, n.subject_id, n.trimestre)
+                notas_sum[key] = notas_sum.get(key, 0) + float(n.valor)
+
+            # ── BULK PREFETCH: comportamientos finales (trimestre=4) ──
+            all_comps = Comportamiento.objects.filter(
+                matricula_id__in=mat_ids,
+                trimestre=4
+            )
+            comps_map = {c.matricula_id: c for c in all_comps}
+
+            # ── Función helper: promedio de materia en un trimestre (sin queries) ──
+            def calc_subject_avg(mat_id, subject_id, trimestre):
+                count = insumos_count.get((subject_id, trimestre), 0)
+                if count == 0:
+                    return 0.0
+                suma = notas_sum.get((mat_id, subject_id, trimestre), 0)
+                return _trunc2(suma / count)
+
+            # ── CONSTRUIR TABLA (sin queries adicionales) ──
             tabla = []
             for mat in matriculas:
                 student_report = {
@@ -34,16 +76,16 @@ class CuadroAnualView(LoginRequiredMixin, TemplateView):
                     'is_materia_view': bool(materia_sel),
                     'total_general': 0,
                     'promedio_general': 0,
-                    'comportamiento_fin': Comportamiento.objects.filter(matricula=mat, trimestre=4).first()
+                    'comportamiento_fin': comps_map.get(mat.pk)
                 }
                 
                 subjects_to_process = [materia_sel] if materia_sel else subjects
                 
                 details = []
                 for s in subjects_to_process:
-                    t1 = mat.get_subject_average(s, 1)
-                    t2 = mat.get_subject_average(s, 2)
-                    t3 = mat.get_subject_average(s, 3)
+                    t1 = calc_subject_avg(mat.pk, s.pk, 1)
+                    t2 = calc_subject_avg(mat.pk, s.pk, 2)
+                    t3 = calc_subject_avg(mat.pk, s.pk, 3)
                     pf = _trunc2((t1 + t2 + t3) / 3)
                         
                     details.append({
@@ -54,11 +96,18 @@ class CuadroAnualView(LoginRequiredMixin, TemplateView):
                 if not materia_sel:
                     suma_finales = _trunc2(sum(d['prom_final'] for d in details))
                 else:
-                    suma_finales = _trunc2(sum(mat.get_subject_final(s) for s in subjects))
+                    # Calcular promedios finales de TODAS las materias sin queries
+                    all_finals = []
+                    for s in subjects:
+                        st1 = calc_subject_avg(mat.pk, s.pk, 1)
+                        st2 = calc_subject_avg(mat.pk, s.pk, 2)
+                        st3 = calc_subject_avg(mat.pk, s.pk, 3)
+                        all_finals.append(_trunc2((st1 + st2 + st3) / 3))
+                    suma_finales = _trunc2(sum(all_finals))
 
                 student_report['materias'] = details
                 student_report['total_general'] = suma_finales
-                student_report['promedio_general'] = _trunc2(suma_finales / subjects.count()) if subjects.exists() else 0
+                student_report['promedio_general'] = _trunc2(suma_finales / subjects_count) if subjects_count > 0 else 0
                 tabla.append(student_report)
 
             context['curso_sel'] = curso
