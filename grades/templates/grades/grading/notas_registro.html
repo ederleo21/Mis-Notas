@@ -364,8 +364,21 @@
     {% if show_table %}
     {# ---- TOOLBAR ---- #}
     <div class="toolbar" style="padding: 0.6rem 1.25rem; border-radius: 1rem; box-shadow: var(--shadow);">
-        <div class="toolbar-title" style="font-size: 1.1rem;">
-            <span>{{ materia_sel.nombre }}</span> / {{ curso_sel }} / <strong>Trimestre {{ trimestre_sel }}</strong>
+        <div class="toolbar-title" style="font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <span style="display: inline-flex; align-items: center; gap: 0.4rem; background: linear-gradient(135deg, #6366f1, #818cf8); color: white; padding: 0.35rem 0.85rem; border-radius: 0.6rem; font-weight: 700; font-size: 0.85rem; letter-spacing: 0.02em;">
+                <i class="fa-solid fa-book" style="font-size: 0.75rem;"></i>
+                {{ materia_sel.nombre }}
+            </span>
+            <i class="fa-solid fa-chevron-right" style="font-size: 0.55rem; color: #cbd5e1;"></i>
+            <span style="display: inline-flex; align-items: center; gap: 0.4rem; background: #f1f5f9; color: #334155; padding: 0.35rem 0.85rem; border-radius: 0.6rem; font-weight: 600; font-size: 0.85rem; border: 1px solid #e2e8f0;">
+                <i class="fa-solid fa-users" style="font-size: 0.7rem; color: #6366f1;"></i>
+                {{ curso_sel }}
+            </span>
+            <i class="fa-solid fa-chevron-right" style="font-size: 0.55rem; color: #cbd5e1;"></i>
+            <span style="display: inline-flex; align-items: center; gap: 0.4rem; background: #fef3c7; color: #92400e; padding: 0.35rem 0.85rem; border-radius: 0.6rem; font-weight: 700; font-size: 0.85rem; border: 1px solid #fde68a;">
+                <i class="fa-solid fa-calendar-check" style="font-size: 0.7rem;"></i>
+                T{{ trimestre_sel }}
+            </span>
         </div>
         <div style="display: flex; gap: 0.75rem;">
             <button class="btn-sm" style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; border-radius: 0.75rem; transition: all 0.2s;" onclick="abrirModalInsumosBase()" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
