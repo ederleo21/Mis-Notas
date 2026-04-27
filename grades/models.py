@@ -118,14 +118,10 @@ class Matricula(models.Model):
         return _trunc2(total)
 
     def get_anual_average(self):
-        """Promedio anual general basado solo en materias con actividades (truncado)."""
-        from .models import CursoActividad
-        active_subjects_count = CursoActividad.objects.filter(
-            curso=self.curso
-        ).values_list('subject_id', flat=True).distinct().count()
-        
-        if active_subjects_count > 0:
-            return _trunc2(self.get_anual_total() / active_subjects_count)
+        """Promedio anual general basado en todas las materias del curso (truncado)."""
+        subjects_count = self.curso.subjects.count()
+        if subjects_count > 0:
+            return _trunc2(self.get_anual_total() / subjects_count)
         return 0.0
 
     def get_trimestre_total(self, trimestre):

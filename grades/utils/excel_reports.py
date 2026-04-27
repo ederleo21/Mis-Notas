@@ -208,14 +208,7 @@ def generar_excel_anual(curso_id):
             t1 = mat.get_subject_average(s, 1)
             t2 = mat.get_subject_average(s, 2)
             t3 = mat.get_subject_average(s, 3)
-            
-            # Divisor dinámico por materia (solo trimestres con actividades)
-            atc = 0
-            for t in [1, 2, 3]:
-                if CursoActividad.objects.filter(curso=curso, subject=s, trimestre=t).exists():
-                    atc += 1
-            
-            pf = _trunc2((t1 + t2 + t3) / atc) if atc > 0 else 0.0
+            pf = _trunc2((t1 + t2 + t3) / 3)
             suma_finales += pf
             
             for i, v in enumerate([t1, t2, t3, pf]):
