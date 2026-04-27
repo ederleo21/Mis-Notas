@@ -19,10 +19,21 @@ class CuadroAnualView(LoginRequiredMixin, TemplateView):
         context['materia_sel_id'] = materia_id
 
         if curso_id:
-            curso = Curso.objects.get(pk=curso_id)
+            try:
+                curso = Curso.objects.get(pk=curso_id)
+            except Curso.DoesNotExist:
+                return context
+
             subjects = list(curso.subjects.all().order_by('nombre'))
             subjects_count = len(subjects)
             matriculas = list(Matricula.objects.filter(curso=curso).select_related('estudiante').order_by('estudiante__apellidos', 'estudiante__nombres'))
+
+            if not matriculas:
+                context['show_table'] = True
+                context['tabla'] = []
+                context['subjects_list'] = subjects
+                context['curso_sel'] = curso
+                return context
 
             materia_sel = None
             if materia_id:

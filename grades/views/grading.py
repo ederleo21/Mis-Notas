@@ -40,11 +40,23 @@ class RegistroNotasView(LoginRequiredMixin, TemplateView):
         context['catalogo_actividades'] = Actividad.objects.all()
 
         if curso_id and trimestre_val and materia_id:
-            curso = Curso.objects.get(pk=curso_id)
-            materia = Subject.objects.get(pk=materia_id)
-            trimestre = int(trimestre_val)
+            try:
+                curso = Curso.objects.get(pk=curso_id)
+                materia = Subject.objects.get(pk=materia_id)
+                trimestre = int(trimestre_val)
+            except (Curso.DoesNotExist, Subject.DoesNotExist, ValueError):
+                return context
 
             matriculas = list(Matricula.objects.filter(curso=curso).select_related('estudiante').order_by('estudiante__apellidos', 'estudiante__nombres'))
+            
+            # Si no hay matriculados, no hay nada que procesar
+            if not matriculas:
+                context['show_table'] = True
+                context['tabla'] = []
+                context['curso_actividades'] = []
+                context['materia_sel'] = materia
+                return context
+
             curso_actividades = list(CursoActividad.objects.filter(
                 curso=curso, 
                 trimestre=trimestre, 
