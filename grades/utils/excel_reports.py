@@ -203,11 +203,20 @@ def generar_excel_anual(curso_id):
         ws.cell(row=r_num, column=2, value=f"{mat.estudiante.apellidos} {mat.estudiante.nombres}").font = Font(bold=True, size=13)
         
         sc_col = 3
+        suma_finales = 0
         for s in subjects:
             t1 = mat.get_subject_average(s, 1)
             t2 = mat.get_subject_average(s, 2)
             t3 = mat.get_subject_average(s, 3)
-            pf = _trunc2((t1 + t2 + t3) / 3)
+            
+            # Divisor dinámico por materia (solo trimestres con actividades)
+            atc = 0
+            for t in [1, 2, 3]:
+                if CursoActividad.objects.filter(curso=curso, subject=s, trimestre=t).exists():
+                    atc += 1
+            
+            pf = _trunc2((t1 + t2 + t3) / atc) if atc > 0 else 0.0
+            suma_finales += pf
             
             for i, v in enumerate([t1, t2, t3, pf]):
                 c = ws.cell(row=r_num, column=sc_col + i, value=v)
@@ -217,10 +226,12 @@ def generar_excel_anual(curso_id):
 
         comp = Comportamiento.objects.filter(matricula=mat, trimestre=4).first()
         ws.cell(row=r_num, column=curr_col, value=comp.valor if comp else 'B').alignment=CENTER_ALIGN
-        cell_total = ws.cell(row=r_num, column=curr_col+1, value=float(mat.get_anual_total()))
-        cell_total.number_format='0.00'; cell_total.alignment=CENTER_ALIGN
         
-        cf = ws.cell(row=r_num, column=curr_col+2, value=float(mat.get_anual_average()))
+        # Total y Promedio Final (Exactamente como el sistema)
+        ws.cell(row=r_num, column=curr_col+1, value=float(_trunc2(suma_finales))).number_format='0.00'
+        
+        prom_final = _trunc2(suma_finales / subjects.count()) if subjects.count() > 0 else 0.0
+        cf = ws.cell(row=r_num, column=curr_col+2, value=float(prom_final))
         cf.font=Font(bold=True, size=12); cf.fill=FILL_TRIMESTER; cf.number_format='0.00'; cf.alignment=CENTER_ALIGN
         r_num += 1
 
