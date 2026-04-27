@@ -55,7 +55,7 @@
         box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         gap: 2rem;
         position: relative;
-        z-index: 9999;
+        z-index: 9999 !important;
     }
     .toolbar-left {
         display: flex;
@@ -123,6 +123,17 @@
         border-radius: 1rem;
         border: 1px solid var(--border);
         overflow: auto;
+        position: relative;
+        z-index: 1;
+    }
+    .grade-table-wrap {
+        background: white;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border);
+        overflow: auto;
+        box-shadow: var(--shadow);
+        position: relative;
+        z-index: 1;
     }
     .report-table {
         width: 100%;
