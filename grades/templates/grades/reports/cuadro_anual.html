@@ -350,89 +350,102 @@
     </div>
 
     {% if show_table %}
-    <div class="report-table-wrap">
-        <table class="report-table">
-            <thead>
-                <tr>
-                    <th rowspan="2" class="col-sticky">LISTADO DE ESTUDIANTES</th>
-                    
-                    {% if materia_sel %}
-                        <th colspan="3" class="materia-head">PROMEDIOS TRIMESTRALES</th>
-                        <th class="main-head">PROMEDIO FINAL</th>
-                    {% else %}
-                        {% for mat in subjects_list %}
-                        <th class="materia-head" style="width: 120px; font-size: 0.85rem !important; padding: 0.75rem !important;">{{ mat.nombre|truncatechars:15|upper }}</th>
-                        {% endfor %}
-                    {% endif %}
-                    
-                    <th rowspan="2" style="width: 60px;">COMP.</th>
-                    <th rowspan="2" style="width: 80px;">TOTAL</th>
-                    <th rowspan="2" class="final-overall" style="width: 90px;">PROM. F.</th>
-                </tr>
-                <tr>
-                    {% if materia_sel %}
-                        <th style="width: 140px;">1ER TRIMESTRE</th>
-                        <th style="width: 140px;">2DO TRIMESTRE</th>
-                        <th style="width: 140px;">3ER TRIMESTRE</th>
-                        <th style="width: 160px;" class="col-final-mat">NOTA FINAL</th>
-                    {% else %}
-                        {% for mat in subjects_list %}
-                        <th style="font-size: 0.7rem; color: #64748b;">PROMEDIO FINAL</th>
-                        {% endfor %}
-                    {% endif %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for fila in tabla %}
-                <tr data-matricula="{{ fila.matricula.pk }}">
-                    <td class="col-sticky">{{ fila.matricula.estudiante|upper }}</td>
-                    
-                    {% if materia_sel %}
-                        {% with m_data=fila.materias.0 %}
-                        <td>{{ m_data.t1|trunc2 }}</td>
-                        <td>{{ m_data.t2|trunc2 }}</td>
-                        <td>{{ m_data.t3|trunc2 }}</td>
-                        <td class="col-final-mat">
-                            {{ m_data.prom_final|trunc2 }}
+        {% if tabla %}
+        <div class="report-table-wrap">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2" class="col-sticky">LISTADO DE ESTUDIANTES</th>
+                        
+                        {% if materia_sel %}
+                            <th colspan="3" class="materia-head">PROMEDIOS TRIMESTRALES</th>
+                            <th class="main-head">PROMEDIO FINAL</th>
+                        {% else %}
+                            {% for mat in subjects_list %}
+                            <th class="materia-head" style="width: 120px; font-size: 0.85rem !important; padding: 0.75rem !important;">{{ mat.nombre|truncatechars:15|upper }}</th>
+                            {% endfor %}
+                        {% endif %}
+                        
+                        <th rowspan="2" style="width: 60px;">COMP..</th>
+                        <th rowspan="2" style="width: 80px;">TOTAL</th>
+                        <th rowspan="2" class="final-overall" style="width: 90px;">PROM. F..</th>
+                    </tr>
+                    <tr>
+                        {% if materia_sel %}
+                            <th style="width: 140px;">1ER TRIMESTRE</th>
+                            <th style="width: 140px;">2DO TRIMESTRE</th>
+                            <th style="width: 140px;">3ER TRIMESTRE</th>
+                            <th style="width: 160px;" class="col-final-mat">NOTA FINAL</th>
+                        {% else %}
+                            {% for mat in subjects_list %}
+                            <th style="font-size: 0.7rem; color: #64748b;">PROMEDIO FINAL</th>
+                            {% endfor %}
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fila in tabla %}
+                    <tr data-matricula="{{ fila.matricula.pk }}">
+                        <td class="col-sticky">{{ fila.matricula.estudiante|upper }}</td>
+                        
+                        {% if materia_sel %}
+                            {% with m_data=fila.materias.0 %}
+                            <td>{{ m_data.t1|trunc2 }}</td>
+                            <td>{{ m_data.t2|trunc2 }}</td>
+                            <td>{{ m_data.t3|trunc2 }}</td>
+                            <td class="col-final-mat">
+                                {{ m_data.prom_final|trunc2 }}
+                            </td>
+                            {% endwith %}
+                        {% else %}
+                            {% for m_data in fila.materias %}
+                            <td style="font-weight: 700; color: #1e40af; background: #f8fafc; font-size: 1.1rem;">{{ m_data.prom_final|trunc2 }}</td>
+                            {% endfor %}
+                        {% endif %}
+                        
+                        <td>
+                            <select class="input-grade" style="width: 45px; height: 32px;" onchange="guardarComportamientoFinal(this, {{ fila.matricula.pk }})">
+                                <option value="A" {% if fila.comportamiento_fin.valor == 'A' %}selected{% endif %}>A</option>
+                                <option value="B" {% if fila.comportamiento_fin.valor == 'B' or not fila.comportamiento_fin %}selected{% endif %}>B</option>
+                                <option value="C" {% if fila.comportamiento_fin.valor == 'C' %}selected{% endif %}>C</option>
+                                <option value="D" {% if fila.comportamiento_fin.valor == 'D' %}selected{% endif %}>D</option>
+                                <option value="E" {% if fila.comportamiento_fin.valor == 'E' %}selected{% endif %}>E</option>
+                            </select>
                         </td>
-                        {% endwith %}
-                    {% else %}
-                        {% for m_data in fila.materias %}
-                        <td style="font-weight: 700; color: #1e40af; background: #f8fafc; font-size: 1.1rem;">{{ m_data.prom_final|trunc2 }}</td>
-                        {% endfor %}
-                    {% endif %}
-                    
-                    <td>
-                        <select class="input-grade" style="width: 45px; height: 32px;" onchange="guardarComportamientoFinal(this, {{ fila.matricula.pk }})">
-                            <option value="A" {% if fila.comportamiento_fin.valor == 'A' %}selected{% endif %}>A</option>
-                            <option value="B" {% if fila.comportamiento_fin.valor == 'B' or not fila.comportamiento_fin %}selected{% endif %}>B</option>
-                            <option value="C" {% if fila.comportamiento_fin.valor == 'C' %}selected{% endif %}>C</option>
-                            <option value="D" {% if fila.comportamiento_fin.valor == 'D' %}selected{% endif %}>D</option>
-                            <option value="E" {% if fila.comportamiento_fin.valor == 'E' %}selected{% endif %}>E</option>
-                        </select>
-                    </td>
-                    
-                    <td id="total-fila-{{ fila.matricula.pk }}" style="font-weight: 700; color: #475569;">
-                        {{ fila.total_general|trunc2 }}
-                    </td>
-                    <td class="final-overall" id="prom-fila-{{ fila.matricula.pk }}">
-                        {{ fila.promedio_general|trunc2 }}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <!-- EMPTY STATE - INVITING TONE -->
-    <div style="background: white; border-radius: 2rem; border: 2px dashed #e2e8f0; padding: 6rem 2rem; text-align: center; margin-top: 2rem; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
-        <div style="background: #eef2ff; width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2.5rem; border: 4px solid white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
-            <i class="fa-solid fa-graduation-cap" style="font-size: 2.5rem; color: #6366f1;"></i>
+                        
+                        <td id="total-fila-{{ fila.matricula.pk }}" style="font-weight: 700; color: #475569;">
+                            {{ fila.total_general|trunc2 }}
+                        </td>
+                        <td class="final-overall" id="prom-fila-{{ fila.matricula.pk }}">
+                            {{ fila.promedio_general|trunc2 }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        <h3 style="color: #0f172a; font-size: 1.8rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.025em;">¡Bienvenido al Panel de Reportes!</h3>
-        <p style="color: #64748b; font-size: 1.15rem; max-width: 500px; margin: 0 auto; line-height: 1.7;">
-            Para comenzar a gestionar tus calificaciones, te invitamos a seleccionar un <strong>Año Lectivo</strong> y un <strong>Curso</strong> en los filtros de arriba.
-            <br><span style="color: #6366f1; font-weight: 600;">¡Empecemos a organizar tus notas! 🚀</span>
+        {% else %}
+        <!-- EMPTY STATE - NO STUDENTS -->
+        <div style="background: white; border-radius: 1.5rem; border: 1.5px dashed #e2e8f0; padding: 5rem 2rem; text-align: center; margin-top: 1.5rem; width: 100%;">
+            <div style="background: #f8fafc; width: 90px; height: 90px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; border: 1px solid #f1f5f9;">
+                <i class="fa-solid fa-users-slash" style="font-size: 2.2rem; color: #cbd5e1;"></i>
+            </div>
+            <h3 style="color: #475569; font-size: 1.4rem; font-weight: 600; margin-bottom: 0.75rem; letter-spacing: -0.01em;">No hay alumnos registrados</h3>
+            <p style="color: #94a3b8; font-size: 0.95rem; max-width: 450px; margin: 0 auto; line-height: 1.6;">
+                Este curso aún no tiene estudiantes matriculados. Primero debes cargar los alumnos en el 
+                <a href="{% url 'notas_registro' %}?curso={{ curso_sel_id }}" style="color: #6366f1; font-weight: 700; text-decoration: none;">Registro de Notas</a>.
+            </p>
+        </div>
+        {% endif %}
+    {% else %}
+    <!-- WELCOME STATE - INVITING TONE (LIGHT VERSION) -->
+    <div style="background: white; border-radius: 1.5rem; border: 1.5px dashed #e2e8f0; padding: 5rem 2rem; text-align: center; margin-top: 1.5rem; width: 100%;">
+        <div style="background: #f8fafc; width: 90px; height: 90px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; border: 1px solid #f1f5f9;">
+            <i class="fa-solid fa-graduation-cap" style="font-size: 2.2rem; color: #cbd5e1;"></i>
+        </div>
+        <h3 style="color: #475569; font-size: 1.4rem; font-weight: 600; margin-bottom: 0.75rem; letter-spacing: -0.01em;">Panel de Cuadro Consolidado</h3>
+        <p style="color: #94a3b8; font-size: 0.95rem; max-width: 450px; margin: 0 auto; line-height: 1.6;">
+            Selecciona un <strong>Año Lectivo</strong> y un <strong>Curso</strong> en los filtros superiores para visualizar el resumen anual de calificaciones.
         </p>
     </div>
     {% endif %}
