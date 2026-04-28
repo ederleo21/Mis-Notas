@@ -1037,6 +1037,26 @@
             });
         }
     </script>
+    <script>
+        // ---- GUARDIÁN DE PRIVACIDAD (Sincronización entre usuarios) ----
+        (function() {
+            const currentUserId = '{{ request.user.pk }}';
+            if (currentUserId && currentUserId !== 'None') {
+                const lastUserId = localStorage.getItem('last_user_id');
+                // Si el usuario que entra es diferente al último que usó este navegador,
+                // limpiamos todos los filtros para evitar que vea lo del profesor anterior.
+                if (lastUserId && lastUserId !== currentUserId) {
+                    console.log("Cambio de usuario detectado. Limpiando filtros por seguridad...");
+                    Object.keys(localStorage).forEach(key => {
+                        if (key.includes('filtro_')) {
+                            localStorage.removeItem(key);
+                        }
+                    });
+                }
+                localStorage.setItem('last_user_id', currentUserId);
+            }
+        })();
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
