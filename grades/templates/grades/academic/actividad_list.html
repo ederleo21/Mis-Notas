@@ -8,9 +8,9 @@
         <h2>Catálogo de Insumos</h2>
         <p>Gestiona las actividades globales disponibles para los docentes.</p>
     </div>
-    <a href="{% url 'actividad_create' %}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+    <button onclick="openEditModal('{% url 'actividad_create' %}', 'Nuevo Insumo')" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
         <i class="fa-solid fa-plus" style="margin-right: 6px;"></i> Nuevo Insumo
-    </a>
+    </button>
 </div>
 
 <div class="table-container">

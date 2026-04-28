@@ -8,9 +8,9 @@
         <h2>Grados y Paralelos</h2>
         <p>Niveles académicos configurados (ej: 3ero B).</p>
     </div>
-    <a href="{% url 'nivel_create' %}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+    <button onclick="openEditModal('{% url 'nivel_create' %}', 'Nuevo Grado / Nivel')" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
         <i class="fa-solid fa-plus" style="margin-right: 6px;"></i> Nuevo Nivel
-    </a>
+    </button>
 </div>
 
 <div class="table-container">

@@ -8,9 +8,9 @@
         <h2>Periodos Lectivos</h2>
         <p>Años académicos configurados en el sistema.</p>
     </div>
-    <a href="{% url 'periodo_create' %}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+    <button onclick="openEditModal('{% url 'periodo_create' %}', 'Nuevo Año Lectivo')" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
         <i class="fa-solid fa-plus" style="margin-right: 6px;"></i> Nuevo Periodo
-    </a>
+    </button>
 </div>
 
 <div class="table-container">

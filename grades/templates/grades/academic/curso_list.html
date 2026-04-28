@@ -8,9 +8,9 @@
         <h2>Gestión de Cursos</h2>
         <p>Relaciona niveles con periodos y docentes.</p>
     </div>
-    <a href="{% url 'curso_create' %}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+    <button onclick="openEditModal('{% url 'curso_create' %}', 'Nuevo Curso', '800px')" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
         <i class="fa-solid fa-plus" style="margin-right: 6px;"></i> Nuevo Curso
-    </a>
+    </button>
 </div>
 
 <div class="table-container">

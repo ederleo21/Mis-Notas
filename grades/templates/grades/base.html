@@ -930,7 +930,7 @@
                         const submitBtn = form.querySelector('[type="submit"]');
                         if (submitBtn) {
                             submitBtn.disabled = true;
-                            submitBtn.textContent = 'Guardando...';
+                            submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...';
                         }
                         
                         try {
@@ -949,14 +949,14 @@
                                 showToast(data.error || "Error al guardar. Revisa los campos.", "error");
                                 if (submitBtn) {
                                     submitBtn.disabled = false;
-                                    submitBtn.textContent = 'Guardar Cambios';
+                                    submitBtn.innerHTML = 'Guardar Cambios';
                                 }
                             }
                         } catch (err) {
                             console.error(err);
                             if (submitBtn) {
                                 submitBtn.disabled = false;
-                                submitBtn.textContent = 'Guardar Cambios';
+                                submitBtn.innerHTML = 'Guardar Cambios';
                             }
                         }
                     };
@@ -1036,6 +1036,17 @@
                 }
             });
         }
+        // Prevenir doble envío en todos los formularios del sistema
+        document.addEventListener('submit', (e) => {
+            // Si el formulario ya está siendo manejado por AJAX (como en los modals), no interferimos
+            if (e.defaultPrevented) return;
+            
+            const btn = e.target.querySelector('button[type="submit"]');
+            if (btn && !btn.disabled) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...';
+            }
+        });
     </script>
     <script>
         // ---- GUARDIÁN DE PRIVACIDAD (Sincronización entre usuarios) ----
