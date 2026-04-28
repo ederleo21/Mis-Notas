@@ -4,6 +4,9 @@ from django.http import HttpResponse
 from ..models import Curso, Subject, Matricula, Nota, Comportamiento, CursoActividad, _trunc2
 from ..utils.excel_reports import generar_excel_trimestre, generar_excel_anual, generar_excel_boletines_individuales
 import io
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CuadroAnualView(LoginRequiredMixin, TemplateView):
     """Vista del Cuadro Final editable que consolida los 3 trimestres."""
@@ -16,12 +19,14 @@ class CuadroAnualView(LoginRequiredMixin, TemplateView):
         curso_id = self.request.GET.get('curso', '')
         materia_id = self.request.GET.get('materia', '')
         context['curso_sel_id'] = curso_id
-        context['materia_sel_id'] = materia_id
-
         if curso_id:
             try:
                 curso = Curso.objects.get(pk=curso_id)
-            except Curso.DoesNotExist:
+            except (Curso.DoesNotExist, ValueError):
+                logger.warning(f"Curso no encontrado o ID inválido: {curso_id}")
+                return context
+            except Exception as e:
+                logger.error(f"Error inesperado al obtener curso {curso_id}: {str(e)}", exc_info=True)
                 return context
 
             subjects = list(curso.subjects.all().order_by('nombre'))
@@ -62,7 +67,8 @@ class CuadroAnualView(LoginRequiredMixin, TemplateView):
             notas_sum = {}
             for n in all_notas:
                 key = (n.matricula_id, n.subject_id, n.trimestre)
-                notas_sum[key] = notas_sum.get(key, 0) + float(n.valor)
+                valor = float(n.valor) if n.valor is not None else 0.0
+                notas_sum[key] = notas_sum.get(key, 0) + valor
 
             # ── BULK PREFETCH: comportamientos finales (trimestre=4) ──
             all_comps = Comportamiento.objects.filter(
