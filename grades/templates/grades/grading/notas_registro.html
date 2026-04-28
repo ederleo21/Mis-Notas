@@ -391,18 +391,32 @@
             </span>
         </div>
         <div style="display: flex; gap: 0.75rem;">
+            {% if tabla %}
             <button class="btn-sm" style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; border-radius: 0.75rem; transition: all 0.2s;" onclick="abrirModalInsumosBase()" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
                 <i class="fa-solid fa-boxes-stacked" style="color: #6366f1;"></i>
                 Insumos Base
             </button>
+            {% else %}
+            <button class="btn-sm" style="background: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; border-radius: 0.75rem; cursor: not-allowed; opacity: 0.7;" title="Debes registrar estudiantes primero para gestionar insumos base" disabled>
+                <i class="fa-solid fa-boxes-stacked" style="color: #94a3b8;"></i>
+                Insumos Base
+            </button>
+            {% endif %}
             <button class="btn-sm" style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; border-radius: 0.75rem; transition: all 0.2s;" onclick="abrirModalAlumnos()" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
                 <i class="fa-solid fa-user-graduate" style="color: #6366f1;"></i>
                 Estudiantes
             </button>
+            {% if tabla %}
             <button class="btn-sm" style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; border-radius: 0.75rem; transition: all 0.2s;" onclick="abrirModalInsumo()" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
                 <i class="fa-solid fa-circle-plus" style="color: #6366f1;"></i>
                 Añadir Insumo
             </button>
+            {% else %}
+            <button class="btn-sm" style="background: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; border-radius: 0.75rem; cursor: not-allowed; opacity: 0.7;" title="Debes registrar estudiantes primero para añadir insumos" disabled>
+                <i class="fa-solid fa-circle-plus" style="color: #94a3b8;"></i>
+                Añadir Insumo
+            </button>
+            {% endif %}
             <div class="dropdown">
                 <button class="btn-sm" onclick="toggleExcelDropdown(event)" style="background: #10b981; color: white; padding: 0.6rem 1.5rem; font-size: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 0.6rem; border-radius: 0.75rem; transition: all 0.3s; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
                     <i class="fa-solid fa-file-excel"></i>
