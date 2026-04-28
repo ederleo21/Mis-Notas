@@ -44,6 +44,10 @@ class RegistroNotasView(LoginRequiredMixin, TemplateView):
                 curso = Curso.objects.get(pk=curso_id)
                 materia = Subject.objects.get(pk=materia_id)
                 trimestre = int(trimestre_val)
+                # Seteamos de una vez estos valores para que los badges siempre salgan
+                context['curso_sel'] = curso
+                context['trimestre_sel'] = trimestre
+                context['materia_sel'] = materia
             except (Curso.DoesNotExist, Subject.DoesNotExist, ValueError):
                 return context
 
@@ -54,7 +58,6 @@ class RegistroNotasView(LoginRequiredMixin, TemplateView):
                 context['show_table'] = True
                 context['tabla'] = []
                 context['curso_actividades'] = []
-                context['materia_sel'] = materia
                 return context
 
             curso_actividades = list(CursoActividad.objects.filter(
@@ -152,9 +155,6 @@ class RegistroNotasView(LoginRequiredMixin, TemplateView):
 
             context['tabla'] = tabla
             context['curso_actividades'] = curso_actividades
-            context['curso_sel'] = curso
-            context['trimestre_sel'] = trimestre
-            context['materia_sel'] = materia
             context['show_table'] = True
 
         return context
