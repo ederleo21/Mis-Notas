@@ -19,6 +19,7 @@ class CuadroAnualView(LoginRequiredMixin, TemplateView):
         curso_id = self.request.GET.get('curso', '')
         materia_id = self.request.GET.get('materia', '')
         context['curso_sel_id'] = curso_id
+        context['materia_sel_id'] = materia_id
         if curso_id:
             try:
                 curso = Curso.objects.get(pk=curso_id)
