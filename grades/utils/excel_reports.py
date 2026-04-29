@@ -70,10 +70,17 @@ def generar_excel_trimestre(curso_id, trimestre, resumido=False):
 
     docente_nombre = f"{curso.docente.first_name} {curso.docente.last_name}" if curso.docente else "ADMINISTRADOR"
     
+    # --- OPTIMIZACIÓN DE CABECERA ---
+    # Traemos todos los CursoActividad de una vez para no hacer queries en el bucle de columnas
+    all_ca_trim = list(CursoActividad.objects.filter(curso=curso, trimestre=trimestre).select_related('actividad'))
+    ca_by_subject = {}
+    for ca in all_ca_trim:
+        ca_by_subject.setdefault(ca.subject_id, []).append(ca)
+
     if resumido:
         total_cols = 2 + subjects.count() + 3
     else:
-        total_cols = 2 + sum(CursoActividad.objects.filter(curso=curso, subject=s, trimestre=trimestre).count() + 1 for s in subjects) + 3
+        total_cols = 2 + sum(len(ca_by_subject.get(s.id, [])) + 1 for s in subjects) + 3
 
     trim_label = "PRIMER" if trimestre == 1 else "SEGUNDO" if trimestre == 2 else "TERCER"
     curso_full = f"{str(curso.nivel).upper()}   {str(curso.periodo)}"
@@ -92,7 +99,7 @@ def generar_excel_trimestre(curso_id, trimestre, resumido=False):
     curr_col = 3
     subject_map = []
     for s in subjects:
-        acts = [] if resumido else list(CursoActividad.objects.filter(curso=curso, subject=s, trimestre=trimestre).order_by('orden'))
+        acts = [] if resumido else ca_by_subject.get(s.id, [])
         n_cols = len(acts) + 1
         
         cell = ws.cell(row=start_row, column=curr_col, value=s.nombre.upper())
@@ -121,6 +128,18 @@ def generar_excel_trimestre(curso_id, trimestre, resumido=False):
         cell.alignment=VERTICAL_ALIGN; cell.border=BORDER
         ws.merge_cells(start_row=start_row, end_row=start_row+1, start_column=curr_col + i, end_column=curr_col + i)
 
+    # --- OPTIMIZACIÓN DE DATOS (NOTAS Y COMPORTAMIENTOS) ---
+    mat_ids = [m.pk for m in matriculas]
+    todas_notas = Nota.objects.filter(matricula_id__in=mat_ids, trimestre=trimestre)
+    notas_map = {(n.matricula_id, n.curso_actividad_id): float(n.valor) for n in todas_notas if n.curso_actividad_id}
+    # Para promedios por materia
+    notas_by_subject = {}
+    for n in todas_notas:
+        key = (n.matricula_id, n.subject_id)
+        notas_by_subject.setdefault(key, []).append(float(n.valor))
+
+    comportamientos = {c.matricula_id: c.valor for c in Comportamiento.objects.filter(matricula_id__in=mat_ids, trimestre=trimestre)}
+
     # Datos
     r_num = start_row + 2
     for idx, mat in enumerate(matriculas, 1):
@@ -128,23 +147,41 @@ def generar_excel_trimestre(curso_id, trimestre, resumido=False):
         ws.cell(row=r_num, column=1, value=idx).alignment = CENTER_ALIGN
         ws.cell(row=r_num, column=2, value=f"{mat.estudiante.apellidos} {mat.estudiante.nombres}").font = Font(bold=True, size=13)
         
+        # --- REPLICAR LÓGICA DE MATRICULA MODEL ---
+        subject_averages = []
+        # Identificar materias activas (según logic de Matricula.get_trimestre_average)
+        active_subject_ids = [s.id for s in subjects if len(ca_by_subject.get(s.id, [])) > 0]
+        
         for sm in subject_map:
+            sid = sm['s'].id
             if not resumido:
                 for i, ca in enumerate(sm['acts']):
-                    nota = Nota.objects.filter(matricula=mat, curso_actividad=ca).first()
-                    v = float(nota.valor) if nota else 0
+                    v = notas_map.get((mat.pk, ca.pk), 0.0)
                     c = ws.cell(row=r_num, column=sm['col'] + i, value=v)
                     c.number_format = '0.00'; c.alignment = CENTER_ALIGN; c.font = Font(size=12)
             
-            p = float(mat.get_subject_average(sm['s'], trimestre))
+            # Cálculo exacto de get_subject_average
+            vals = notas_by_subject.get((mat.pk, sid), [])
+            count = len(ca_by_subject.get(sid, []))
+            p = _trunc2(sum(vals) / count) if count > 0 else 0.0
+            
+            # Guardamos el promedio si la materia es activa para el total/promedio final
+            if sid in active_subject_ids:
+                subject_averages.append(p)
+                
             cp = ws.cell(row=r_num, column=sm['col'] + sm['n'] - 1, value=p)
             cp.font=Font(bold=True, size=12); cp.fill=FILL_AVG; cp.number_format='0.00'; cp.alignment=CENTER_ALIGN
 
-        comp = Comportamiento.objects.filter(matricula=mat, trimestre=trimestre).first()
-        ws.cell(row=r_num, column=curr_col, value=comp.valor if comp else 'B').alignment=CENTER_ALIGN
-        ws.cell(row=r_num, column=curr_col+1, value=float(mat.get_trimestre_total(trimestre))).number_format='0.00'
+        # Comportamiento
+        ws.cell(row=r_num, column=curr_col, value=comportamientos.get(mat.pk, 'B')).alignment=CENTER_ALIGN
         
-        cf = ws.cell(row=r_num, column=curr_col+2, value=float(mat.get_trimestre_average(trimestre)))
+        # Cálculo exacto de get_trimestre_total
+        total_trim = _trunc2(sum(subject_averages))
+        ws.cell(row=r_num, column=curr_col+1, value=float(total_trim)).number_format='0.00'
+        
+        # Cálculo exacto de get_trimestre_average
+        prom_trim = _trunc2(total_trim / len(active_subject_ids)) if active_subject_ids else 0.0
+        cf = ws.cell(row=r_num, column=curr_col+2, value=float(prom_trim))
         cf.font=Font(bold=True, size=12); cf.fill=FILL_TRIMESTER; cf.number_format='0.00'; cf.alignment=CENTER_ALIGN
         r_num += 1
 
@@ -366,6 +403,6 @@ def generar_excel_boletines_individuales(curso_id):
         c = ws.cell(row=r_firma+1, column=3, value="DOCENTE TUTOR")
         c.font=Font(bold=True); c.alignment=CENTER_ALIGN
         
-        current_row = r_firma + 5 # 3 líneas de separación entre actas
+        current_row = r_firma + 5 # 3 líneas de separation entre actas
         
     return wb

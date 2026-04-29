@@ -424,11 +424,11 @@
                     <i class="fa-solid fa-chevron-down" style="font-size: 0.75rem; opacity: 0.8;"></i>
                 </button>
                 <div id="excelDropdownContent" class="dropdown-content">
-                    <a href="{% url 'exportar_trimestre_excel' %}?curso={{ curso_sel_id }}&trimestre={{ trimestre_sel_val }}&tipo=detallado">
+                    <a href="javascript:void(0)" onclick="exportarExcel('{% url 'exportar_trimestre_excel' %}?curso={{ curso_sel_id }}&trimestre={{ trimestre_sel_val }}&tipo=detallado', this)">
                         <i class="fa-solid fa-file-invoice" style="color: #6366f1;"></i>
                         Reporte Detallado
                     </a>
-                    <a href="{% url 'exportar_trimestre_excel' %}?curso={{ curso_sel_id }}&trimestre={{ trimestre_sel_val }}&tipo=resumido">
+                    <a href="javascript:void(0)" onclick="exportarExcel('{% url 'exportar_trimestre_excel' %}?curso={{ curso_sel_id }}&trimestre={{ trimestre_sel_val }}&tipo=resumido', this)">
                         <i class="fa-solid fa-table-list" style="color: #10b981;"></i>
                         Reporte Resumido
                     </a>
@@ -795,6 +795,23 @@
     if (materiaSelect) {
         materiaSelect.addEventListener('change', () => evaluarEnvioFiltros());
     }
+
+    function exportarExcel(url, element) {
+        if (element.classList.contains('processing')) return;
+        const originalHTML = element.innerHTML;
+        element.classList.add('processing');
+        element.style.pointerEvents = 'none';
+        element.style.opacity = '0.7';
+        element.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Generando...';
+        setTimeout(() => {
+            element.classList.remove('processing');
+            element.style.pointerEvents = 'auto';
+            element.style.opacity = '1';
+            element.innerHTML = originalHTML;
+        }, 8000);
+        window.location.href = url;
+    }
+
     function abrirModalAlumnos() { document.getElementById('modalAlumnos').classList.add('active'); }
     function cerrarModal() { 
         document.getElementById('modalAlumnos').classList.remove('active'); 

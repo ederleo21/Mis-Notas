@@ -3,7 +3,7 @@ services:
     name: sistema-academico
     runtime: python
     buildCommand: "./build.sh"
-    startCommand: "gunicorn academic_sys.wsgi"
+    startCommand: "gunicorn academic_sys.wsgi --timeout 120"
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.0
