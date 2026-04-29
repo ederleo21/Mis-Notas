@@ -330,11 +330,11 @@
                         <i class="fa-solid fa-chevron-down" style="font-size: 0.75rem; margin-left: 0.3rem;"></i>
                     </button>
                     <div id="dropdownExport" class="dropdown-menu">
-                        <a href="{% url 'exportar_boletines_excel' %}?curso={{ curso_sel_id }}" class="dropdown-item">
+                        <a href="javascript:void(0)" onclick="exportarExcel('{% url 'exportar_boletines_excel' %}?curso={{ curso_sel_id }}', this)" class="dropdown-item">
                             <i class="fa-solid fa-address-book" style="color: #6366f1;"></i>
                             Boletines Individuales
                         </a>
-                        <a href="{% url 'exportar_anual_excel' %}?curso={{ curso_sel_id }}" class="dropdown-item">
+                        <a href="javascript:void(0)" onclick="exportarExcel('{% url 'exportar_anual_excel' %}?curso={{ curso_sel_id }}', this)" class="dropdown-item">
                             <i class="fa-solid fa-table" style="color: #10b981;"></i>
                             Cuadro Final
                         </a>
@@ -465,6 +465,22 @@ window.addEventListener('click', function(e) {
 });
 
 // (Exam final removed - final grade is the average of the 3 trimesters)
+
+function exportarExcel(url, element) {
+    if (element.classList.contains('processing')) return;
+    const originalHTML = element.innerHTML;
+    element.classList.add('processing');
+    element.style.pointerEvents = 'none';
+    element.style.opacity = '0.7';
+    element.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Generando...';
+    setTimeout(() => {
+        element.classList.remove('processing');
+        element.style.pointerEvents = 'auto';
+        element.style.opacity = '1';
+        element.innerHTML = originalHTML;
+    }, 8000);
+    window.location.href = url;
+}
 
 function guardarComportamientoFinal(select, matriculaId) {
     fetch("{% url 'guardar_comportamiento' %}", {

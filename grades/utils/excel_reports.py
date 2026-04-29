@@ -234,32 +234,68 @@ def generar_excel_anual(curso_id):
         ws.merge_cells(start_row=start_row, end_row=start_row+1, start_column=curr_col + i, end_column=curr_col + i)
 
     r_num = start_row + 2
+    
+    # --- OPTIMIZACIÓN: Carga masiva de datos anuales ---
+    mat_ids = [m.pk for m in matriculas]
+    all_ca = list(CursoActividad.objects.filter(curso=curso, trimestre__in=[1, 2, 3]))
+    ca_ids = [ca.pk for ca in all_ca]
+    
+    # Insumos por (subject_id, trimestre) -> count
+    insumos_count = {}
+    for ca in all_ca:
+        if ca.subject_id:
+            key = (ca.subject_id, ca.trimestre)
+            insumos_count[key] = insumos_count.get(key, 0) + 1
+
+    # Todas las notas de los 3 trimestres
+    todas_notas = Nota.objects.filter(matricula_id__in=mat_ids, curso_actividad_id__in=ca_ids)
+    
+    # Mapa de sumas: (matricula_id, subject_id, trimestre) -> suma
+    notas_sum_map = {}
+    for n in todas_notas:
+        key = (n.matricula_id, n.subject_id, n.trimestre)
+        notas_sum_map[key] = notas_sum_map.get(key, 0) + float(n.valor)
+
+    # Comportamientos finales (trimestre 4)
+    todos_comps = {c.matricula_id: c.valor for c in Comportamiento.objects.filter(matricula_id__in=mat_ids, trimestre=4)}
+
     for idx, mat in enumerate(matriculas, 1):
         ws.row_dimensions[r_num].height = 25
         ws.cell(row=r_num, column=1, value=idx).alignment = CENTER_ALIGN
         ws.cell(row=r_num, column=2, value=f"{mat.estudiante.apellidos} {mat.estudiante.nombres}").font = Font(bold=True, size=13)
         
         sc_col = 3
-        suma_finales = 0
+        all_finals = []
         for s in subjects:
-            t1 = mat.get_subject_average(s, 1)
-            t2 = mat.get_subject_average(s, 2)
-            t3 = mat.get_subject_average(s, 3)
-            pf = _trunc2((t1 + t2 + t3) / 3)
-            suma_finales += pf
+            # Cálculo de promedios trimestrales (t1, t2, t3) según lógica de CuadroAnualView
+            trims_avg = []
+            for t in [1, 2, 3]:
+                count = insumos_count.get((s.id, t), 0)
+                if count > 0:
+                    suma = notas_sum_map.get((mat.pk, s.id, t), 0)
+                    avg = _trunc2(suma / count)
+                    trims_avg.append(avg)
+                else:
+                    trims_avg.append(0.0)
             
-            for i, v in enumerate([t1, t2, t3, pf]):
+            # Promedio Final de la materia: (t1 + t2 + t3) / 3
+            pf = _trunc2(sum(trims_avg) / 3)
+            all_finals.append(pf)
+            
+            for i, v in enumerate(trims_avg + [pf]):
                 c = ws.cell(row=r_num, column=sc_col + i, value=v)
                 c.number_format = '0.00'; c.alignment = CENTER_ALIGN
                 if i == 3: c.font = Font(bold=True, size=12); c.fill = FILL_AVG
             sc_col += 4
 
-        comp = Comportamiento.objects.filter(matricula=mat, trimestre=4).first()
-        ws.cell(row=r_num, column=curr_col, value=comp.valor if comp else 'B').alignment=CENTER_ALIGN
+        # Comportamiento Final
+        ws.cell(row=r_num, column=curr_col, value=todos_comps.get(mat.pk, 'B')).alignment=CENTER_ALIGN
         
-        # Total y Promedio Final (Exactamente como el sistema)
-        ws.cell(row=r_num, column=curr_col+1, value=float(_trunc2(suma_finales))).number_format='0.00'
+        # Total General (suma de promedios finales truncada)
+        suma_finales = _trunc2(sum(all_finals))
+        ws.cell(row=r_num, column=curr_col+1, value=float(suma_finales)).number_format='0.00'
         
+        # Promedio General Anual (total / todos los subjects del curso)
         prom_final = _trunc2(suma_finales / subjects.count()) if subjects.count() > 0 else 0.0
         cf = ws.cell(row=r_num, column=curr_col+2, value=float(prom_final))
         cf.font=Font(bold=True, size=12); cf.fill=FILL_TRIMESTER; cf.number_format='0.00'; cf.alignment=CENTER_ALIGN
@@ -278,131 +314,104 @@ def generar_excel_boletines_individuales(curso_id):
     subjects = curso.subjects.all().order_by('nombre')
     matriculas = Matricula.objects.filter(curso=curso).select_related('estudiante')
     
-    # Configuramos el ancho de las columnas (Compacto Horizontalmente, Promedio más grande)
-    ws.column_dimensions['A'].width = 38 # Materias
-    for c in ['B','C','D']: ws.column_dimensions[c].width = 8 # Trimesters
-    ws.column_dimensions['E'].width = 16 # Promedio Final (Más grande)
+    # Configuramos el ancho de las columnas
+    ws.column_dimensions['A'].width = 38 
+    for c in ['B','C','D']: ws.column_dimensions[c].width = 8 
+    ws.column_dimensions['E'].width = 16 
     
     current_row = 1
     
+    # --- OPTIMIZACIÓN: Carga masiva para boletines ---
+    mat_ids = [m.pk for m in matriculas]
+    all_ca = list(CursoActividad.objects.filter(curso=curso, trimestre__in=[1, 2, 3]))
+    ca_ids = [ca.pk for ca in all_ca]
+    insumos_count = {}
+    for ca in all_ca:
+        if ca.subject_id:
+            key = (ca.subject_id, ca.trimestre)
+            insumos_count[key] = insumos_count.get(key, 0) + 1
+
+    todas_notas = Nota.objects.filter(matricula_id__in=mat_ids, curso_actividad_id__in=ca_ids)
+    notas_sum_map = {}
+    for n in todas_notas:
+        key = (n.matricula_id, n.subject_id, n.trimestre)
+        notas_sum_map[key] = notas_sum_map.get(key, 0) + float(n.valor)
+
+    todos_comps = {}
+    for c in Comportamiento.objects.filter(matricula_id__in=mat_ids):
+        todos_comps[(c.matricula_id, c.trimestre)] = c.valor
+
     for mat in matriculas:
-        # --- CABECERA POR ESTUDIANTE ---
-        # Llenamos solo hasta la columna E para alinear con la tabla de abajo
+        # (El código de la cabecera del boletín se mantiene igual...)
         for r in range(current_row, current_row + 4):
             for c in range(1, 6):
                 ws.cell(row=r, column=c).fill = FILL_LIGHT_GRAY
-                
         ws.row_dimensions[current_row].height = 25
-        # Mergeamos del 1 al 5 para alineación perfecta con los datos
         ws.merge_cells(start_row=current_row, end_row=current_row, start_column=1, end_column=5)
-        c = ws.cell(row=current_row, column=1, value="UNIDAD EDUCATIVA \"ARQ. JULIO VITERI GAMBOA\"")
-        c.font = Font(bold=True, size=14); c.alignment = CENTER_ALIGN; c.fill = FILL_LIGHT_GRAY
-        
+        ws.cell(row=current_row, column=1, value="UNIDAD EDUCATIVA \"ARQ. JULIO VITERI GAMBOA\"").font = Font(bold=True, size=14); ws.cell(row=current_row, column=1).alignment = CENTER_ALIGN; ws.cell(row=current_row, column=1).fill = FILL_LIGHT_GRAY
         ws.merge_cells(start_row=current_row+1, end_row=current_row+1, start_column=1, end_column=5)
-        c = ws.cell(row=current_row+1, column=1, value="Educación General Bàsica Elemental")
-        c.font = Font(size=11); c.alignment = CENTER_ALIGN; c.fill = FILL_LIGHT_GRAY
-        
+        ws.cell(row=current_row+1, column=1, value="Educación General Bàsica Elemental").font = Font(size=11); ws.cell(row=current_row+1, column=1).alignment = CENTER_ALIGN; ws.cell(row=current_row+1, column=1).fill = FILL_LIGHT_GRAY
         ws.merge_cells(start_row=current_row+2, end_row=current_row+2, start_column=1, end_column=5)
-        c = ws.cell(row=current_row+2, column=1, value="REPORTE ANUAL DE CALIFICACIONES")
-        c.font = Font(bold=True, size=12); c.alignment = CENTER_ALIGN; c.fill = FILL_LIGHT_GRAY
-        
+        ws.cell(row=current_row+2, column=1, value="REPORTE ANUAL DE CALIFICACIONES").font = Font(bold=True, size=12); ws.cell(row=current_row+2, column=1).alignment = CENTER_ALIGN; ws.cell(row=current_row+2, column=1).fill = FILL_LIGHT_GRAY
         ws.merge_cells(start_row=current_row+3, end_row=current_row+3, start_column=1, end_column=5)
-        c = ws.cell(row=current_row+3, column=1, value=f"Año Lectivo: {curso.periodo.nombre}")
-        c.font = Font(bold=True, size=11); c.alignment = CENTER_ALIGN; c.fill = FILL_LIGHT_GRAY
+        ws.cell(row=current_row+3, column=1, value=f"Año Lectivo: {curso.periodo.nombre}").font = Font(bold=True, size=11); ws.cell(row=current_row+3, column=1).alignment = CENTER_ALIGN; ws.cell(row=current_row+3, column=1).fill = FILL_LIGHT_GRAY
         
-        # Logos más pequeños para que entren sin problemas
         try:
-            p_ind = os.path.join(settings.BASE_DIR, 'static', 'logos', 'logoExcelIndividual.png')
-            p_esc = os.path.join(settings.BASE_DIR, 'static', 'logos', 'logoescuela.jpeg')
-            if os.path.exists(p_ind):
-                img_ind = Image(p_ind); img_ind.height = 55; img_ind.width = 130
-                ws.add_image(img_ind, 'A' + str(current_row + 1))
-            if os.path.exists(p_esc):
-                img_esc = Image(p_esc); img_esc.height = 60; img_esc.width = 65
-                ws.add_image(img_esc, 'E' + str(current_row + 1))
+            p_ind = os.path.join(settings.BASE_DIR, 'static', 'logos', 'logoExcelIndividual.png'); p_esc = os.path.join(settings.BASE_DIR, 'static', 'logos', 'logoescuela.jpeg')
+            if os.path.exists(p_ind): img_ind = Image(p_ind); img_ind.height = 55; img_ind.width = 130; ws.add_image(img_ind, 'A' + str(current_row + 1))
+            if os.path.exists(p_esc): img_esc = Image(p_esc); img_esc.height = 60; img_esc.width = 65; ws.add_image(img_esc, 'E' + str(current_row + 1))
         except: pass
         
         r_info = current_row + 6
-        ws.cell(row=r_info, column=1, value="Datos informativos del estudiante:").font=Font(size=11)
+        ws.cell(row=r_info, column=1, value="Datos informativos del estudiante:")
         ws.cell(row=r_info+1, column=1, value=f"Nombre: {mat.estudiante.apellidos} {mat.estudiante.nombres}").font=Font(bold=True, size=12)
-        ws.cell(row=r_info+2, column=1, value=f"Grado/Curso: {curso.nivel}").font=Font(size=11)
+        ws.cell(row=r_info+2, column=1, value=f"Grado/Curso: {curso.nivel}")
+        ws.cell(row=r_info+1, column=4, value="RÈGIMEN: COSTA"); ws.cell(row=r_info+2, column=4, value="JORNADA: MATUTINA"); ws.cell(row=r_info+3, column=4, value="MODALIDAD: PRESENCIAL")
         
-        ws.cell(row=r_info+1, column=4, value="RÈGIMEN: COSTA").font=Font(size=11)
-        ws.cell(row=r_info+2, column=4, value="JORNADA: MATUTINA").font=Font(size=11)
-        ws.cell(row=r_info+3, column=4, value="MODALIDAD: PRESENCIAL").font=Font(size=11)
-        
-        # --- TABLA DE NOTAS ---
         r_table = r_info + 4
-        # Headers principal
         ws.merge_cells(start_row=r_table, end_row=r_table+1, start_column=1, end_column=1)
-        c = ws.cell(row=r_table, column=1, value="ASIGNATURAS:")
-        c.font=Font(bold=True); c.fill=FILL_GRAY; c.alignment=CENTER_ALIGN; c.border=BORDER
-        
+        c = ws.cell(row=r_table, column=1, value="ASIGNATURAS:"); c.font=Font(bold=True); c.fill=FILL_GRAY; c.alignment=CENTER_ALIGN; c.border=BORDER
         ws.merge_cells(start_row=r_table, end_row=r_table, start_column=2, end_column=4)
-        c = ws.cell(row=r_table, column=2, value="Trimestres")
-        c.font=Font(bold=True); c.fill=FILL_GRAY; c.alignment=CENTER_ALIGN; c.border=BORDER
-        
+        c = ws.cell(row=r_table, column=2, value="Trimestres"); c.font=Font(bold=True); c.fill=FILL_GRAY; c.alignment=CENTER_ALIGN; c.border=BORDER
         ws.merge_cells(start_row=r_table, end_row=r_table, start_column=5, end_column=5)
-        c = ws.cell(row=r_table, column=5, value="Promedio Final")
-        c.font=Font(bold=True); c.fill=FILL_GRAY; c.alignment=CENTER_ALIGN; c.border=BORDER
-        
-        # Sub Headers
+        c = ws.cell(row=r_table, column=5, value="Promedio Final"); c.font=Font(bold=True); c.fill=FILL_GRAY; c.alignment=CENTER_ALIGN; c.border=BORDER
         for i, v in enumerate(["I", "II", "III", "Promedio Simple"]):
-            sc = ws.cell(row=r_table+1, column=2+i, value=v)
-            sc.font=Font(bold=True); sc.fill=FILL_GRAY; sc.alignment=CENTER_ALIGN; sc.border=BORDER
+            sc = ws.cell(row=r_table+1, column=2+i, value=v); sc.font=Font(bold=True); sc.fill=FILL_GRAY; sc.alignment=CENTER_ALIGN; sc.border=BORDER
             
         r_data = r_table + 2
-        suma_promedios = 0
+        all_finals = []
         for s in subjects:
             ws.cell(row=r_data, column=1, value=s.nombre.upper()).border=BORDER
-            t1 = mat.get_subject_average(s, 1)
-            t2 = mat.get_subject_average(s, 2)
-            t3 = mat.get_subject_average(s, 3)
-            pf = _trunc2((t1 + t2 + t3) / 3)
+            trims_avg = []
+            for t in [1, 2, 3]:
+                count = insumos_count.get((s.id, t), 0)
+                suma = notas_sum_map.get((mat.pk, s.id, t), 0)
+                avg = _trunc2(suma / count) if count > 0 else 0.0
+                trims_avg.append(avg)
             
-            suma_promedios += pf
-            
-            for i, v in enumerate([t1, t2, t3, pf]):
-                c = ws.cell(row=r_data, column=2+i, value=v)
-                c.number_format='0.00'; c.alignment=CENTER_ALIGN; c.border=BORDER
+            pf = _trunc2(sum(trims_avg) / 3)
+            all_finals.append(pf)
+            for i, v in enumerate(trims_avg + [pf]):
+                c = ws.cell(row=r_data, column=2+i, value=v); c.number_format='0.00'; c.alignment=CENTER_ALIGN; c.border=BORDER
             r_data += 1
             
-        # PROMEDIO GENERAL
-        ws.cell(row=r_data, column=1, value="PROMEDIO GENERAL").font=Font(bold=True)
-        ws.cell(row=r_data, column=1).border=BORDER
+        ws.cell(row=r_data, column=1, value="PROMEDIO GENERAL").font=Font(bold=True); ws.cell(row=r_data, column=1).border=BORDER
         for i in range(2, 5): ws.cell(row=r_data, column=i).border=BORDER
-        pg = ws.cell(row=r_data, column=5, value=_trunc2(suma_promedios/subjects.count()) if subjects.count()>0 else 0)
-        pg.font=Font(bold=True); pg.number_format='0.00'; pg.alignment=CENTER_ALIGN; pg.border=BORDER
+        suma_finales = _trunc2(sum(all_finals))
+        prom_gen = _trunc2(suma_finales / subjects.count()) if subjects.count() > 0 else 0.0
+        pg = ws.cell(row=r_data, column=5, value=float(prom_gen)); pg.font=Font(bold=True); pg.number_format='0.00'; pg.alignment=CENTER_ALIGN; pg.border=BORDER
         
-        # COMPORTAMIENTO
         r_comp = r_data + 2
         ws.cell(row=r_comp, column=1, value="COMPORTAMIENTO").border=BORDER
         for i in range(1, 4):
-            c_trim = Comportamiento.objects.filter(matricula=mat, trimestre=i).first()
-            val = c_trim.valor if c_trim else 'B'
-            sc = ws.cell(row=r_comp, column=1+i, value=val)
-            sc.alignment=CENTER_ALIGN; sc.border=BORDER
-            
-        cf = Comportamiento.objects.filter(matricula=mat, trimestre=4).first()
-        cv = ws.cell(row=r_comp, column=5, value=cf.valor if cf else 'B')
-        cv.alignment=CENTER_ALIGN; cv.border=BORDER
+            val = todos_comps.get((mat.pk, i), 'B')
+            sc = ws.cell(row=r_comp, column=1+i, value=val); sc.alignment=CENTER_ALIGN; sc.border=BORDER
+        cv = ws.cell(row=r_comp, column=5, value=todos_comps.get((mat.pk, 4), 'B')); cv.alignment=CENTER_ALIGN; cv.border=BORDER
         
-        # FIRMAS
-        r_firma = r_comp + 4 # 3 líneas de espacio antes de la firma
-        ws.merge_cells(start_row=r_firma, end_row=r_firma, start_column=1, end_column=2)
-        c = ws.cell(row=r_firma, column=1, value="_________________________")
-        c.alignment=CENTER_ALIGN
-        ws.merge_cells(start_row=r_firma+1, end_row=r_firma+1, start_column=1, end_column=2)
-        c = ws.cell(row=r_firma+1, column=1, value="RECTOR/A")
-        c.font=Font(bold=True); c.alignment=CENTER_ALIGN
-        
-        ws.merge_cells(start_row=r_firma, end_row=r_firma, start_column=3, end_column=4)
-        c = ws.cell(row=r_firma, column=3, value="_________________________")
-        c.alignment=CENTER_ALIGN
-        ws.merge_cells(start_row=r_firma+1, end_row=r_firma+1, start_column=3, end_column=4)
-        c = ws.cell(row=r_firma+1, column=3, value="DOCENTE TUTOR")
-        c.font=Font(bold=True); c.alignment=CENTER_ALIGN
-        
-        current_row = r_firma + 5 # 3 líneas de separation entre actas
-        
+        r_firma = r_comp + 4
+        ws.merge_cells(start_row=r_firma, end_row=r_firma, start_column=1, end_column=2); ws.cell(row=r_firma, column=1, value="_________________________").alignment=CENTER_ALIGN
+        ws.merge_cells(start_row=r_firma+1, end_row=r_firma+1, start_column=1, end_column=2); ws.cell(row=r_firma+1, column=1, value="RECTOR/A").font=Font(bold=True); ws.cell(row=r_firma+1, column=1).alignment=CENTER_ALIGN
+        ws.merge_cells(start_row=r_firma, end_row=r_firma, start_column=3, end_column=4); ws.cell(row=r_firma, column=3, value="_________________________").alignment=CENTER_ALIGN
+        ws.merge_cells(start_row=r_firma+1, end_row=r_firma+1, start_column=3, end_column=4); ws.cell(row=r_firma+1, column=3, value="DOCENTE TUTOR").font=Font(bold=True); ws.cell(row=r_firma+1, column=3).alignment=CENTER_ALIGN
+        current_row = r_firma + 5 
     return wb
