@@ -1041,6 +1041,9 @@
             // Si el formulario ya está siendo manejado por AJAX (como en los modals), no interferimos
             if (e.defaultPrevented) return;
             
+            // NO aplicar a formularios de logout o búsqueda simple
+            if (e.target.action && e.target.action.includes('logout')) return;
+            
             const btn = e.target.querySelector('button[type="submit"]');
             if (btn && !btn.disabled) {
                 btn.disabled = true;
